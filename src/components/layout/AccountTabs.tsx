@@ -1,22 +1,24 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
+import { useAccountNames } from '@/context/AccountNamesContext';
 
 type AccountType = 'acbs' | 'innovision' | 'infrastructure';
 
-const ACCOUNT_TABS: { id: AccountType; label: string; description: string }[] = [
-    { id: 'acbs', label: 'ACBS', description: 'Association of Computer Business Systems' },
-    { id: 'innovision', label: 'Innovision', description: 'Annual Flagship Event' },
-    { id: 'infrastructure', label: 'Infrastructure', description: 'Infrastructure Account' },
-];
-
 export default function AccountTabs() {
     const { user, selectedAccount, setSelectedAccount } = useAuth();
+    const { accountNames } = useAccountNames();
 
     // Only show tabs for HOD and Admin roles
     if (!user || user.role === 'staff') {
         return null;
     }
+
+    const ACCOUNT_TABS: { id: AccountType; label: string }[] = [
+        { id: 'acbs', label: accountNames.acbs },
+        { id: 'innovision', label: accountNames.innovision },
+        { id: 'infrastructure', label: accountNames.infrastructure },
+    ];
 
     return (
         <div className="bg-white border-b border-slate-200 px-4 py-2">
@@ -27,10 +29,10 @@ export default function AccountTabs() {
                         <button
                             key={tab.id}
                             onClick={() => setSelectedAccount(tab.id)}
-                            title={tab.description}
+                            title={`Switch to ${tab.label} account`}
                             className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${selectedAccount === tab.id
-                                    ? 'bg-brandNavy text-white shadow-sm'
-                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                                ? 'bg-brandNavy text-white shadow-sm'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
                                 }`}
                         >
                             {tab.label}
@@ -41,3 +43,4 @@ export default function AccountTabs() {
         </div>
     );
 }
+

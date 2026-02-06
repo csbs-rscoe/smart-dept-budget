@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useAccountNames } from '@/context/AccountNamesContext';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
@@ -22,12 +23,22 @@ interface Semester {
 
 export default function MiscellaneousPage() {
     const { user, isLoading: authLoading } = useAuth();
+    const { accountNames, updateAccountNames, refreshAccountNames } = useAccountNames();
     const router = useRouter();
     const [semesters, setSemesters] = useState<Semester[]>([]);
     const [isFetching, setIsFetching] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingSemester, setEditingSemester] = useState<Semester | null>(null);
+
+    // Account Names Modal State
+    const [isAccountNamesModalOpen, setIsAccountNamesModalOpen] = useState(false);
+    const [accountNamesForm, setAccountNamesForm] = useState({
+        acbs: '',
+        innovision: '',
+        infrastructure: '',
+    });
+    const [isSavingAccountNames, setIsSavingAccountNames] = useState(false);
 
     const [formData, setFormData] = useState({
         semester_number: '1',
@@ -98,6 +109,37 @@ export default function MiscellaneousPage() {
             is_active: semester.is_active,
         });
         setIsModalOpen(true);
+    };
+
+    const openAccountNamesModal = () => {
+        setAccountNamesForm({
+            acbs: accountNames.acbs,
+            innovision: accountNames.innovision,
+            infrastructure: accountNames.infrastructure,
+        });
+        setIsAccountNamesModalOpen(true);
+    };
+
+    const handleSaveAccountNames = async () => {
+        if (!accountNamesForm.acbs || !accountNamesForm.innovision || !accountNamesForm.infrastructure) {
+            alert('All account names are required');
+            return;
+        }
+
+        setIsSavingAccountNames(true);
+        try {
+            const success = await updateAccountNames(accountNamesForm);
+            if (success) {
+                setIsAccountNamesModalOpen(false);
+                await refreshAccountNames();
+            } else {
+                alert('Failed to save account names');
+            }
+        } catch (err) {
+            alert('Network error');
+        } finally {
+            setIsSavingAccountNames(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -193,6 +235,33 @@ export default function MiscellaneousPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Miscellaneous Settings</h1>
                     <p className="text-sm text-slate-500 mt-1">System configuration for administrators</p>
+                </div>
+            </div>
+
+            {/* Account Names Section */}
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                    <div>
+                        <h2 className="text-lg font-semibold text-slate-900">Account Names</h2>
+                        <p className="text-sm text-slate-500">Rename the staff account display names</p>
+                    </div>
+                    <Button onClick={openAccountNamesModal}>Edit Account Names</Button>
+                </div>
+                <div className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="p-3 bg-slate-50 rounded-lg">
+                            <p className="text-xs text-slate-500 mb-1">ACBS Account</p>
+                            <p className="font-medium text-slate-900">{accountNames.acbs}</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-lg">
+                            <p className="text-xs text-slate-500 mb-1">Innovision Account</p>
+                            <p className="font-medium text-slate-900">{accountNames.innovision}</p>
+                        </div>
+                        <div className="p-3 bg-slate-50 rounded-lg">
+                            <p className="text-xs text-slate-500 mb-1">Infrastructure Account</p>
+                            <p className="font-medium text-slate-900">{accountNames.infrastructure}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -345,6 +414,50 @@ export default function MiscellaneousPage() {
                         </Button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* Account Names Modal */}
+            <Modal
+                isOpen={isAccountNamesModalOpen}
+                onClose={() => setIsAccountNamesModalOpen(false)}
+                title="Edit Account Names"
+                size="md"
+            >
+                <div className="space-y-4">
+                    <p className="text-sm text-slate-500">
+                        Change the display names for staff accounts. These names will be shown across the entire application.
+                    </p>
+
+                    <Input
+                        label="ACBS Account Name *"
+                        value={accountNamesForm.acbs}
+                        onChange={(e) => setAccountNamesForm({ ...accountNamesForm, acbs: e.target.value })}
+                        placeholder="e.g., ACBS"
+                    />
+
+                    <Input
+                        label="Innovision Account Name *"
+                        value={accountNamesForm.innovision}
+                        onChange={(e) => setAccountNamesForm({ ...accountNamesForm, innovision: e.target.value })}
+                        placeholder="e.g., Innovision"
+                    />
+
+                    <Input
+                        label="Infrastructure Account Name *"
+                        value={accountNamesForm.infrastructure}
+                        onChange={(e) => setAccountNamesForm({ ...accountNamesForm, infrastructure: e.target.value })}
+                        placeholder="e.g., Infrastructure"
+                    />
+
+                    <div className="flex justify-end gap-3 pt-4 border-t">
+                        <Button type="button" variant="ghost" onClick={() => setIsAccountNamesModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleSaveAccountNames} isLoading={isSavingAccountNames}>
+                            Save Changes
+                        </Button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );

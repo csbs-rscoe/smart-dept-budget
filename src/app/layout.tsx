@@ -2,6 +2,7 @@ import './globals.css';
 import { ReactNode } from 'react';
 import { AuthProvider } from '../context/AuthContext';
 import { SidebarProvider } from '../context/SidebarContext';
+import { AccountNamesProvider } from '../context/AccountNamesContext';
 import AppShell from '../components/layout/AppShell';
 
 export const metadata = {
@@ -14,9 +15,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <AuthProvider>
-          <SidebarProvider>
-            <AppShell>{children}</AppShell>
-          </SidebarProvider>
+          <AccountNamesProvider>
+            <SidebarProvider>
+              <AppShell>{children}</AppShell>
+            </SidebarProvider>
+          </AccountNamesProvider>
         </AuthProvider>
       </body>
     </html>
