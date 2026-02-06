@@ -19,6 +19,11 @@ export async function GET(request: NextRequest) {
     const budgetId = url.searchParams.get('budget_id');
     const startDate = url.searchParams.get('start_date');
     const endDate = url.searchParams.get('end_date');
+    // Account type filtering: staff use their fixed type, HOD/Admin use query param
+    const accountTypeParam = url.searchParams.get('account_type');
+    const accountType = user.role === 'staff' && user.account_type
+      ? user.account_type
+      : (accountTypeParam || 'acbs');
 
     // Build period filter dates
     const now = new Date();
@@ -70,6 +75,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN budgets b ON b.id = e.budget_id
         LEFT JOIN users u ON u.id = e.created_by
         WHERE e.department_id = ${user.department_id}
+          AND e.account_type = ${accountType}
           AND (e.name ILIKE ${'%' + search + '%'} OR e.description ILIKE ${'%' + search + '%'} OR c.name ILIKE ${'%' + search + '%'})
           AND e.category_id = ${parseInt(categoryId)}
           AND e.status = ${status}
@@ -99,6 +105,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN budgets b ON b.id = e.budget_id
         LEFT JOIN users u ON u.id = e.created_by
         WHERE e.department_id = ${user.department_id}
+          AND e.account_type = ${accountType}
           AND (e.name ILIKE ${'%' + search + '%'} OR e.description ILIKE ${'%' + search + '%'} OR c.name ILIKE ${'%' + search + '%'})
           AND e.category_id = ${parseInt(categoryId)}
         ORDER BY e.expense_date DESC, e.created_at DESC
@@ -127,6 +134,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN budgets b ON b.id = e.budget_id
         LEFT JOIN users u ON u.id = e.created_by
         WHERE e.department_id = ${user.department_id}
+          AND e.account_type = ${accountType}
           AND (e.name ILIKE ${'%' + search + '%'} OR e.description ILIKE ${'%' + search + '%'} OR c.name ILIKE ${'%' + search + '%'})
           AND e.status = ${status}
         ORDER BY e.expense_date DESC, e.created_at DESC
@@ -155,6 +163,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN budgets b ON b.id = e.budget_id
         LEFT JOIN users u ON u.id = e.created_by
         WHERE e.department_id = ${user.department_id}
+          AND e.account_type = ${accountType}
           AND e.category_id = ${parseInt(categoryId)}
           AND e.status = ${status}
         ORDER BY e.expense_date DESC, e.created_at DESC
@@ -183,6 +192,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN budgets b ON b.id = e.budget_id
         LEFT JOIN users u ON u.id = e.created_by
         WHERE e.department_id = ${user.department_id}
+          AND e.account_type = ${accountType}
           AND (e.name ILIKE ${'%' + search + '%'} OR e.description ILIKE ${'%' + search + '%'} OR c.name ILIKE ${'%' + search + '%'})
         ORDER BY e.expense_date DESC, e.created_at DESC
       `;
@@ -210,6 +220,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN budgets b ON b.id = e.budget_id
         LEFT JOIN users u ON u.id = e.created_by
         WHERE e.department_id = ${user.department_id}
+          AND e.account_type = ${accountType}
           AND e.category_id = ${parseInt(categoryId)}
         ORDER BY e.expense_date DESC, e.created_at DESC
       `;
@@ -237,6 +248,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN budgets b ON b.id = e.budget_id
         LEFT JOIN users u ON u.id = e.created_by
         WHERE e.department_id = ${user.department_id}
+          AND e.account_type = ${accountType}
           AND e.status = ${status}
         ORDER BY e.expense_date DESC, e.created_at DESC
       `;
@@ -264,6 +276,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN budgets b ON b.id = e.budget_id
         LEFT JOIN users u ON u.id = e.created_by
         WHERE e.department_id = ${user.department_id}
+          AND e.account_type = ${accountType}
         ORDER BY e.expense_date DESC, e.created_at DESC
       `;
     }
@@ -311,14 +324,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, amount, budget_id, category_id, description, spender, payment_method, expense_date, breakdowns, receipts } = body;
+    const { name, amount, budget_id, category_id, description, spender, payment_method, expense_date, breakdowns, receipts, account_type: bodyAccountType } = body;
 
     if (!name || !amount) {
       return NextResponse.json({ success: false, error: 'Name and amount are required' }, { status: 400 });
     }
 
+    // Determine account_type: staff use their fixed type, HOD/Admin use body param or default
+    const accountType = user.role === 'staff' && user.account_type
+      ? user.account_type
+      : (bodyAccountType || 'acbs');
+
     const result = await sql`
-      INSERT INTO expenses_new (department_id, budget_id, category_id, name, amount, description, spender, payment_method, expense_date, created_by)
+      INSERT INTO expenses_new (department_id, budget_id, category_id, name, amount, description, spender, payment_method, expense_date, created_by, account_type)
       VALUES (
         ${user.department_id},
         ${budget_id || null},
@@ -329,7 +347,8 @@ export async function POST(request: NextRequest) {
         ${spender || null},
         ${payment_method || 'cash'},
         ${expense_date || new Date().toISOString().split('T')[0]},
-        ${user.id}
+        ${user.id},
+        ${accountType}
       )
       RETURNING *
     `;

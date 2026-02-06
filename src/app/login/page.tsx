@@ -13,7 +13,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
 
-  const handleSubmit = async (e:  React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
@@ -21,9 +21,9 @@ export default function LoginPage() {
     try {
       const result = await login(email, password);
       if (result.success) {
-        router. push('/');
+        router.push('/');
       } else {
-        setError(result. error || 'Invalid credentials');
+        setError(result.error || 'Invalid credentials');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
@@ -79,7 +79,7 @@ export default function LoginPage() {
             </ul>
           </div>
           <p className="text-white/50 text-xs">
-            © 2024 JSPM&apos;s RSCOE. Enterprise Budget Suite v1.0
+            © 2026 JSPM&apos;s RSCOE. Department of CSBS Budget Suite
           </p>
         </div>
       </div>
@@ -111,7 +111,7 @@ export default function LoginPage() {
                 label="Email Address"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e. target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@rscoe.edu. in"
                 required
               />
@@ -143,14 +143,20 @@ export default function LoginPage() {
               <p className="text-xs text-slate-500 text-center mb-3">Quick Login (click to autofill)</p>
               <div className="space-y-2">
                 {[
-                  { email: 'admin@rscoe.edu.in', role: 'Admin' },
-                  { email: 'hod@rscoe.edu.in', role: 'HOD' },
-                  { email: 'staff@rscoe. edu.in', role: 'Staff' },
+                  { email: 'admin@rscoe.edu.in', role: 'Admin', password: 'Admin@123' },
+                  { email: 'hod@rscoe.edu.in', role: 'HOD', password: 'Admin@123' },
+                  { email: 'acbs@rscoe.edu.in', role: 'ACBS Staff', password: 'ACBS@123' },
+                  { email: 'innovision@rscoe.edu.in', role: 'Innovision', password: 'Innovision@123' },
+                  { email: 'staff@rscoe.edu.in', role: 'Infrastructure', password: 'Staff@123' },
                 ].map((cred) => (
                   <button
                     key={cred.email}
                     type="button"
-                    onClick={() => fillCredentials(cred.email)}
+                    onClick={() => {
+                      setEmail(cred.email);
+                      setPassword(cred.password);
+                      setError('');
+                    }}
                     className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors text-sm"
                   >
                     <span className="text-slate-600">{cred.email}</span>
@@ -160,7 +166,7 @@ export default function LoginPage() {
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-slate-400 text-center mt-3">Password:  Admin@123</p>
+              <p className="text-xs text-slate-400 text-center mt-3">HOD/Admin: Admin@123 | Staff accounts: their respective passwords</p>
             </div>
           </div>
 

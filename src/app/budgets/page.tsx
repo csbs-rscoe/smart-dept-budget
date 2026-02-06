@@ -26,6 +26,9 @@ interface Budget {
   source: string | null;
   payment_method: string;
   budget_date: string;
+  budget_date_from?: string;
+  budget_date_to?: string;
+  account_type?: string;
   fiscal_year: string;
   status: string;
   created_by_name: string;
@@ -46,7 +49,7 @@ interface Semester {
 }
 
 export default function BudgetsPage() {
-  const { user } = useAuth();
+  const { user, effectiveAccountType } = useAuth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
@@ -77,6 +80,8 @@ export default function BudgetsPage() {
     source: '',
     payment_method: 'cash',
     budget_date: new Date().toISOString().split('T')[0],
+    budget_date_from: '',
+    budget_date_to: '',
   });
 
   const [breakdownItems, setBreakdownItems] = useState<BudgetBreakdown[]>([
@@ -87,6 +92,7 @@ export default function BudgetsPage() {
     setIsLoading(true);
     try {
       let url = '/api/budgets-new?';
+      url += `account_type=${effectiveAccountType}&`;
       if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}&`;
       if (filters.category_id) url += `category_id=${filters.category_id}&`;
       if (filters.source) url += `source=${encodeURIComponent(filters.source)}&`;
@@ -158,6 +164,8 @@ export default function BudgetsPage() {
       source: '',
       payment_method: 'cash',
       budget_date: new Date().toISOString().split('T')[0],
+      budget_date_from: '',
+      budget_date_to: '',
     });
     setBreakdownItems([{ name: '', amount: '', payment_method: 'cash' }]);
   };
@@ -177,6 +185,8 @@ export default function BudgetsPage() {
       source: budget.source || '',
       payment_method: budget.payment_method,
       budget_date: budget.budget_date.split('T')[0],
+      budget_date_from: (budget as any).budget_date_from?.split('T')[0] || '',
+      budget_date_to: (budget as any).budget_date_to?.split('T')[0] || '',
     });
     setBreakdownItems(
       budget.breakdowns && budget.breakdowns.length > 0
@@ -198,6 +208,7 @@ export default function BudgetsPage() {
         ...formData,
         amount: parseFloat(formData.amount),
         category_id: formData.category_id ? parseInt(formData.category_id) : null,
+        account_type: effectiveAccountType,
         breakdowns: validBreakdowns.map(b => ({
           name: b.name,
           amount: parseFloat(b.amount.toString()),

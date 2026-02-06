@@ -4,21 +4,22 @@ import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env. JWT_SECRET || 'fallback-secret-change-in-production'
+  process.env.JWT_SECRET || 'fallback-secret-change-in-production'
 );
 
 export interface User {
   id: number;
   department_id: number;
   name: string;
-  email:  string;
+  email: string;
   role: 'admin' | 'hod' | 'staff';
-  is_active:  boolean;
+  is_active: boolean;
+  account_type?: 'acbs' | 'innovision' | 'infrastructure' | null;
 }
 
 export interface Session {
-  user:  User;
-  expires:  Date;
+  user: User;
+  expires: Date;
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -34,7 +35,7 @@ export async function createToken(user: User): Promise<string> {
     userId: user.id,
     email: user.email,
     role: user.role,
-    departmentId: user. department_id,
+    departmentId: user.department_id,
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -44,7 +45,7 @@ export async function createToken(user: User): Promise<string> {
   return token;
 }
 
-export async function verifyToken(token:  string): Promise<any> {
+export async function verifyToken(token: string): Promise<any> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
     return payload;
@@ -56,25 +57,25 @@ export async function verifyToken(token:  string): Promise<any> {
 export async function loginUser(
   email: string,
   password: string
-): Promise<{ success: boolean; user?: User; token?:  string; error?: string }> {
+): Promise<{ success: boolean; user?: User; token?: string; error?: string }> {
   try {
     const users = await sql`
-      SELECT id, department_id, name, email, password_hash, role, is_active
+      SELECT id, department_id, name, email, password_hash, role, is_active, account_type
       FROM users
-      WHERE email = ${email. toLowerCase().trim()}
+      WHERE email = ${email.toLowerCase().trim()}
     `;
 
-    if (users. length === 0) {
+    if (users.length === 0) {
       return { success: false, error: 'Invalid email or password' };
     }
 
     const user = users[0];
 
     if (!user.is_active) {
-      return { success:  false, error: 'Account is deactivated.  Contact administrator.' };
+      return { success: false, error: 'Account is deactivated.  Contact administrator.' };
     }
 
-    const isValid = await verifyPassword(password, user. password_hash);
+    const isValid = await verifyPassword(password, user.password_hash);
 
     if (!isValid) {
       return { success: false, error: 'Invalid email or password' };
@@ -82,13 +83,14 @@ export async function loginUser(
 
     await sql`UPDATE users SET last_login = NOW() WHERE id = ${user.id}`;
 
-    const userData:  User = {
+    const userData: User = {
       id: Number(user.id),
-      department_id: Number(user. department_id),
-      name: user. name,
+      department_id: Number(user.department_id),
+      name: user.name,
       email: user.email,
       role: user.role,
       is_active: user.is_active,
+      account_type: user.account_type || null,
     };
 
     const token = await createToken(userData);
@@ -126,12 +128,13 @@ export async function getCurrentUser(): Promise<User | null> {
         s.user_id,
         u.department_id,
         u.name,
-        u. email,
+        u.email,
         u.role,
-        u.is_active
+        u.is_active,
+        u.account_type
       FROM sessions s
       JOIN users u ON u.id = s.user_id
-      WHERE s. token = ${token} AND s.expires_at > NOW() AND u.is_active = true
+      WHERE s.token = ${token} AND s.expires_at > NOW() AND u.is_active = true
     `;
 
     if (sessions.length === 0) {
@@ -142,12 +145,13 @@ export async function getCurrentUser(): Promise<User | null> {
 
     // CRITICAL FIX:  Ensure all IDs are numbers
     return {
-      id:  Number(session.user_id),
+      id: Number(session.user_id),
       department_id: Number(session.department_id),
       name: String(session.name),
       email: String(session.email),
       role: session.role as 'admin' | 'hod' | 'staff',
-      is_active:  Boolean(session.is_active),
+      is_active: Boolean(session.is_active),
+      account_type: session.account_type || null,
     };
   } catch (error) {
     console.error('Get current user error:', error);
@@ -170,10 +174,10 @@ export function hasPermission(userRole: string, requiredRoles: string[]): boolea
 export const ROLE_PERMISSIONS = {
   admin: ['create', 'read', 'update', 'delete', 'approve', 'manage_users', 'manage_budgets', 'view_reports', 'download_reports'],
   hod: ['create', 'read', 'update', 'approve', 'manage_budgets', 'view_reports', 'download_reports'],
-  staff:  ['create', 'read', 'view_reports'],
+  staff: ['create', 'read', 'view_reports'],
 };
 
-export function canPerformAction(role:  string, action: string): boolean {
+export function canPerformAction(role: string, action: string): boolean {
   const permissions = ROLE_PERMISSIONS[role as keyof typeof ROLE_PERMISSIONS];
-  return permissions?. includes(action) || false;
+  return permissions?.includes(action) || false;
 }

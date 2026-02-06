@@ -19,6 +19,11 @@ export async function GET(request: NextRequest) {
     const fiscalYear = url.searchParams.get('fiscal_year');
     const startDate = url.searchParams.get('start_date');
     const endDate = url.searchParams.get('end_date');
+    // For HOD/Admin: get account_type from query param. For staff: use their fixed account_type
+    const accountTypeParam = url.searchParams.get('account_type');
+    const accountType = user.role === 'staff' && user.account_type
+      ? user.account_type
+      : (accountTypeParam || 'acbs');
 
     // Build dynamic filter conditions
     const conditions: string[] = [];
@@ -71,6 +76,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN categories c ON c.id = b.category_id
         LEFT JOIN users u ON u.id = b.created_by
         WHERE b.department_id = ${user.department_id}
+          AND b.account_type = ${accountType}
           AND (b.name ILIKE ${'%' + search + '%'} OR b.description ILIKE ${'%' + search + '%'} OR c.name ILIKE ${'%' + search + '%'})
           AND b.category_id = ${parseInt(categoryId)}
           AND b.source ILIKE ${'%' + source + '%'}
@@ -90,6 +96,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN categories c ON c.id = b.category_id
         LEFT JOIN users u ON u.id = b.created_by
         WHERE b.department_id = ${user.department_id}
+          AND b.account_type = ${accountType}
           AND (b.name ILIKE ${'%' + search + '%'} OR b.description ILIKE ${'%' + search + '%'} OR c.name ILIKE ${'%' + search + '%'})
           AND b.category_id = ${parseInt(categoryId)}
         ORDER BY b.budget_date DESC, b.created_at DESC
@@ -108,6 +115,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN categories c ON c.id = b.category_id
         LEFT JOIN users u ON u.id = b.created_by
         WHERE b.department_id = ${user.department_id}
+          AND b.account_type = ${accountType}
           AND (b.name ILIKE ${'%' + search + '%'} OR b.description ILIKE ${'%' + search + '%'} OR c.name ILIKE ${'%' + search + '%'})
           AND b.source ILIKE ${'%' + source + '%'}
         ORDER BY b.budget_date DESC, b.created_at DESC
@@ -126,6 +134,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN categories c ON c.id = b.category_id
         LEFT JOIN users u ON u.id = b.created_by
         WHERE b.department_id = ${user.department_id}
+          AND b.account_type = ${accountType}
           AND b.category_id = ${parseInt(categoryId)}
           AND b.source ILIKE ${'%' + source + '%'}
         ORDER BY b.budget_date DESC, b.created_at DESC
@@ -144,6 +153,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN categories c ON c.id = b.category_id
         LEFT JOIN users u ON u.id = b.created_by
         WHERE b.department_id = ${user.department_id}
+          AND b.account_type = ${accountType}
           AND (b.name ILIKE ${'%' + search + '%'} OR b.description ILIKE ${'%' + search + '%'} OR c.name ILIKE ${'%' + search + '%'})
         ORDER BY b.budget_date DESC, b.created_at DESC
       `;
@@ -161,6 +171,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN categories c ON c.id = b.category_id
         LEFT JOIN users u ON u.id = b.created_by
         WHERE b.department_id = ${user.department_id}
+          AND b.account_type = ${accountType}
           AND b.category_id = ${parseInt(categoryId)}
         ORDER BY b.budget_date DESC, b.created_at DESC
       `;
@@ -178,6 +189,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN categories c ON c.id = b.category_id
         LEFT JOIN users u ON u.id = b.created_by
         WHERE b.department_id = ${user.department_id}
+          AND b.account_type = ${accountType}
           AND b.source ILIKE ${'%' + source + '%'}
         ORDER BY b.budget_date DESC, b.created_at DESC
       `;
@@ -195,6 +207,7 @@ export async function GET(request: NextRequest) {
         LEFT JOIN categories c ON c.id = b.category_id
         LEFT JOIN users u ON u.id = b.created_by
         WHERE b.department_id = ${user.department_id}
+          AND b.account_type = ${accountType}
         ORDER BY b.budget_date DESC, b.created_at DESC
       `;
     }
@@ -274,16 +287,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, amount, category_id, description, source, payment_method, budget_date, breakdowns } = body;
+    const { name, amount, category_id, description, source, payment_method, budget_date, budget_date_from, budget_date_to, breakdowns, account_type: bodyAccountType } = body;
 
     if (!name || !amount) {
       return NextResponse.json({ success: false, error: 'Name and amount are required' }, { status: 400 });
     }
 
+    // Determine account_type: staff use their fixed type, HOD/Admin use body param or default
+    const accountType = user.role === 'staff' && user.account_type
+      ? user.account_type
+      : (bodyAccountType || 'acbs');
+
     const fiscalYear = getFiscalYear(budget_date ? new Date(budget_date) : new Date());
 
     const result = await sql`
-      INSERT INTO budgets (department_id, category_id, name, amount, description, source, payment_method, budget_date, fiscal_year, created_by)
+      INSERT INTO budgets (department_id, category_id, name, amount, description, source, payment_method, budget_date, budget_date_from, budget_date_to, fiscal_year, created_by, account_type)
       VALUES (
         ${user.department_id},
         ${category_id || null},
@@ -293,8 +311,11 @@ export async function POST(request: NextRequest) {
         ${source || null},
         ${payment_method || 'cash'},
         ${budget_date || new Date().toISOString().split('T')[0]},
+        ${budget_date_from || null},
+        ${budget_date_to || null},
         ${fiscalYear},
-        ${user.id}
+        ${user.id},
+        ${accountType}
       )
       RETURNING *
     `;

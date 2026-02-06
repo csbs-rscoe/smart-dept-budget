@@ -5,14 +5,15 @@ import { useEffect, ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import MobileSidebar from './MobileSidebar';
+import AccountTabs from './AccountTabs';
 
-export default function AppShell({ children }:  { children: ReactNode }) {
+export default function AppShell({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
-    if (! isLoading && !isAuthenticated && pathname !== '/login') {
+    if (!isLoading && !isAuthenticated && pathname !== '/login') {
       router.push('/login');
     }
   }, [isAuthenticated, isLoading, pathname, router]);
@@ -45,6 +46,7 @@ export default function AppShell({ children }:  { children: ReactNode }) {
       <MobileSidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar />
+        <AccountTabs />
         <main className="flex-1 p-4 md:p-6 overflow-auto">{children}</main>
       </div>
     </div>
