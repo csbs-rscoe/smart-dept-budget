@@ -141,6 +141,7 @@ export default function ReportsPage() {
           to_month: toMonth,
           from_year: fromYear,
           to_year: toYear,
+          account_type: effectiveAccountType,
         }),
       });
 

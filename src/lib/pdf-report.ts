@@ -40,14 +40,14 @@ interface ExpenseData {
 const BRAND_NAVY = rgb(0.12, 0.23, 0.37);
 const BRAND_GOLD = rgb(0.79, 0.64, 0.15);
 
-async function loadLogo(): Promise<Uint8Array | null> {
+async function loadLogo(filename: string = 'logo.jpg'): Promise<Uint8Array | null> {
     try {
-        const logoPath = path.join(process.cwd(), 'public', 'logo.jpg');
+        const logoPath = path.join(process.cwd(), 'public', filename);
         if (fs.existsSync(logoPath)) {
             return fs.readFileSync(logoPath);
         }
     } catch (e) {
-        console.log('Logo not loaded:', e);
+        console.log(`Logo ${filename} not loaded:`, e);
     }
     return null;
 }
@@ -79,20 +79,46 @@ export async function generateBudgetReportPDF(
 
     let y = height - 50;
 
-    // Load and embed logo
-    const logoBytes = await loadLogo();
-    if (logoBytes) {
+    // Helper to embed image robustly (tries JPG then PNG)
+    const embedImage = async (bytes: Uint8Array) => {
         try {
-            const logoImage = await pdfDoc.embedJpg(logoBytes);
-            const logoDims = logoImage.scale(0.15);
+            return await pdfDoc.embedJpg(bytes);
+        } catch {
+            try {
+                return await pdfDoc.embedPng(bytes);
+            } catch {
+                return null;
+            }
+        }
+    };
+
+    // Load and embed logo (Left)
+    const logoBytes = await loadLogo('logo.jpg');
+    if (logoBytes) {
+        const logoImage = await embedImage(logoBytes);
+        if (logoImage) {
+            const logoDims = logoImage.scale(0.45);
             page.drawImage(logoImage, {
-                x: 50,
-                y: y - logoDims.height + 10,
+                x: 30,
+                y: y - logoDims.height + 35,
                 width: logoDims.width,
                 height: logoDims.height,
             });
-        } catch (e) {
-            console.log('Could not embed logo:', e);
+        }
+    }
+
+    // Load and embed logo 2 (Right)
+    const logo2Bytes = await loadLogo('logo_2.jpg');
+    if (logo2Bytes) {
+        const logoImage = await embedImage(logo2Bytes);
+        if (logoImage) {
+            const logoDims = logoImage.scale(0.45);
+            page.drawImage(logoImage, {
+                x: width - 30 - logoDims.width, // Right aligned
+                y: y - logoDims.height + 35,
+                width: logoDims.width,
+                height: logoDims.height,
+            });
         }
     }
 
@@ -214,7 +240,7 @@ export async function generateBudgetReportPDF(
     page.drawText('Prepared By:', { x: 50, y, size: 9, font: fontRegular });
     page.drawLine({ start: { x: 50, y: y - 35 }, end: { x: 180, y: y - 35 }, thickness: 0.5, color: rgb(0, 0, 0) });
     page.drawText(options.generatedBy, { x: 50, y: y - 48, size: 9, font: fontBold });
-    page.drawText('Head of Department', { x: 50, y: y - 60, size: 8, font: fontRegular, color: rgb(0.4, 0.4, 0.4) });
+
 
     // Approved By HOD
     page.drawText('Approved By:', { x: 380, y, size: 9, font: fontRegular });
@@ -244,20 +270,46 @@ export async function generateExpenseReportPDF(
 
     let y = height - 50;
 
-    // Load and embed logo
-    const logoBytes = await loadLogo();
-    if (logoBytes) {
+    // Helper to embed image robustly (tries JPG then PNG)
+    const embedImage = async (bytes: Uint8Array) => {
         try {
-            const logoImage = await pdfDoc.embedJpg(logoBytes);
-            const logoDims = logoImage.scale(0.15);
+            return await pdfDoc.embedJpg(bytes);
+        } catch {
+            try {
+                return await pdfDoc.embedPng(bytes);
+            } catch {
+                return null;
+            }
+        }
+    };
+
+    // Load and embed logo (Left)
+    const logoBytes = await loadLogo('logo.jpg');
+    if (logoBytes) {
+        const logoImage = await embedImage(logoBytes);
+        if (logoImage) {
+            const logoDims = logoImage.scale(0.45);
             page.drawImage(logoImage, {
-                x: 50,
-                y: y - logoDims.height + 10,
+                x: 30,
+                y: y - logoDims.height + 35,
                 width: logoDims.width,
                 height: logoDims.height,
             });
-        } catch (e) {
-            console.log('Could not embed logo:', e);
+        }
+    }
+
+    // Load and embed logo 2 (Right)
+    const logo2Bytes = await loadLogo('logo_2.jpg');
+    if (logo2Bytes) {
+        const logoImage = await embedImage(logo2Bytes);
+        if (logoImage) {
+            const logoDims = logoImage.scale(0.45);
+            page.drawImage(logoImage, {
+                x: width - 30 - logoDims.width, // Right aligned
+                y: y - logoDims.height + 35,
+                width: logoDims.width,
+                height: logoDims.height,
+            });
         }
     }
 
@@ -377,7 +429,7 @@ export async function generateExpenseReportPDF(
     page.drawText('Prepared By:', { x: 50, y, size: 9, font: fontRegular });
     page.drawLine({ start: { x: 50, y: y - 35 }, end: { x: 180, y: y - 35 }, thickness: 0.5, color: rgb(0, 0, 0) });
     page.drawText(options.generatedBy, { x: 50, y: y - 48, size: 9, font: fontBold });
-    page.drawText('Head of Department', { x: 50, y: y - 60, size: 8, font: fontRegular, color: rgb(0.4, 0.4, 0.4) });
+
 
     // Approved By HOD
     page.drawText('Approved By:', { x: 380, y, size: 9, font: fontRegular });

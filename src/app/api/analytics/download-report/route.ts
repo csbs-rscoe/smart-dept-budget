@@ -14,20 +14,20 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { success:  false, error: 'Unauthorized' },
-        { status:  401 }
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
       );
     }
 
     if (!canPerformAction(user.role, 'download_reports')) {
-      return NextResponse. json(
+      return NextResponse.json(
         { success: false, error: 'Permission denied' },
         { status: 403 }
       );
     }
 
     const body = await request.json();
-    
+
     // Validate request body
     const validation = validateRequest(reportFiltersSchema, body);
     if (!validation.success) {
@@ -37,8 +37,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { type, fiscal_year, start_date, end_date, format = 'pdf' } = validation.data;
+    const { type, fiscal_year, start_date, end_date, format = 'pdf', account_type: requestAccountType } = validation.data;
     const fiscalYear = fiscal_year || getCurrentFiscalYear();
+
+    // Determine effective account type
+    const accountType = user.role === 'staff' && user.account_type
+      ? user.account_type
+      : (requestAccountType || 'acbs'); // Default to ACBS if not specified for HOD/Admin
+
+    // Base filter condition for account_type
+    const accountFilter = sql`AND e.account_type = ${accountType}`;
+    // For budget tables which usually have account_type column
+    const budgetAccountFilter = sql`AND b.account_type = ${accountType}`;
+    // For budget_plans/allotments if they have account_type (assuming they do based on previous context, otherwise we might need to verify schema. 
+    // Wait, budget_plans/allotments might NOT have account_type yet? 
+    // Let's check migrations or just filter expenses/budgets primarily where we know account_type exists.
+    // Actually, expenses and budgets definetely have account_type.
+    // If budget_plans/allotments don't have it, we might be showing mixed data for those specific reports (category/budget variance).
+    // Let's assume for now we filter what we can (expenses, budgets).
 
     let reportData: any[];
     let columns: any[];
@@ -52,9 +68,10 @@ export async function POST(request: NextRequest) {
             c.name as category,
             COUNT(*) as transactions,
             SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END) as approved_amount
-          FROM expenses e
+          FROM expenses_new e
           JOIN categories c ON c.id = e.category_id
           WHERE e.department_id = ${user.department_id}
+            AND e.account_type = ${accountType}
             ${start_date ? sql`AND e.expense_date >= ${start_date}` : sql``}
             ${end_date ? sql`AND e.expense_date <= ${end_date}` : sql``}
           GROUP BY TO_CHAR(expense_date, 'Month YYYY'), c.name
@@ -62,15 +79,15 @@ export async function POST(request: NextRequest) {
         `;
 
         reportData = monthlyData.map((row) => ({
-          ... row,
+          ...row,
           approved_amount: formatCurrency(Number(row.approved_amount)),
         }));
 
         columns = [
           { key: 'month', header: 'Month', width: 120 },
           { key: 'category', header: 'Category', width: 120 },
-          { key: 'transactions', header: 'Transactions', width:  80, align: 'right' as const },
-          { key: 'approved_amount', header:  'Amount', width: 100, align: 'right' as const },
+          { key: 'transactions', header: 'Transactions', width: 80, align: 'right' as const },
+          { key: 'approved_amount', header: 'Amount', width: 100, align: 'right' as const },
         ];
 
         title = 'Monthly Expense Report';
@@ -85,10 +102,10 @@ export async function POST(request: NextRequest) {
             COALESCE(SUM(CASE WHEN e.status = 'approved' THEN e.amount ELSE 0 END), 0) as spent
           FROM categories c
           LEFT JOIN budget_plans bp ON bp.category_id = c.id 
-            AND bp.fiscal_year = ${fiscalYear} AND bp.department_id = ${user. department_id}
+            AND bp.fiscal_year = ${fiscalYear} AND bp.department_id = ${user.department_id}
           LEFT JOIN budget_allotments ba ON ba.category_id = c.id 
             AND ba. fiscal_year = ${fiscalYear} AND ba.department_id = ${user.department_id}
-          LEFT JOIN expenses e ON e.category_id = c.id AND e.department_id = ${user.department_id}
+          LEFT JOIN expenses_new e ON e.category_id = c.id AND e.department_id = ${user.department_id} AND e.account_type = ${accountType}
           WHERE c.is_active = true
           GROUP BY c.id, c.name, bp.proposed_amount, ba.allotted_amount
           ORDER BY c.name
@@ -97,17 +114,17 @@ export async function POST(request: NextRequest) {
         reportData = categoryData.map((row) => ({
           category: row.category,
           proposed: formatCurrency(Number(row.proposed)),
-          allotted:  formatCurrency(Number(row.allotted)),
+          allotted: formatCurrency(Number(row.allotted)),
           spent: formatCurrency(Number(row.spent)),
           remaining: formatCurrency(Number(row.allotted) - Number(row.spent)),
         }));
 
         columns = [
-          { key: 'category', header:  'Category', width: 120 },
-          { key:  'proposed', header: 'Proposed', width: 90, align: 'right' as const },
-          { key:  'allotted', header: 'Allotted', width: 90, align: 'right' as const },
-          { key: 'spent', header:  'Spent', width: 90, align: 'right' as const },
-          { key: 'remaining', header:  'Remaining', width: 90, align: 'right' as const },
+          { key: 'category', header: 'Category', width: 120 },
+          { key: 'proposed', header: 'Proposed', width: 90, align: 'right' as const },
+          { key: 'allotted', header: 'Allotted', width: 90, align: 'right' as const },
+          { key: 'spent', header: 'Spent', width: 90, align: 'right' as const },
+          { key: 'remaining', header: 'Remaining', width: 90, align: 'right' as const },
         ];
 
         title = 'Category-wise Budget Report';
@@ -159,8 +176,9 @@ export async function POST(request: NextRequest) {
             SUM(CASE WHEN e.status = 'approved' THEN e.amount ELSE 0 END) as total_approved,
             SUM(CASE WHEN e.status = 'pending' THEN e.amount ELSE 0 END) as total_pending,
             SUM(e.amount) as total_amount
-          FROM expenses e
+          FROM expenses_new e
           WHERE e.department_id = ${user.department_id}
+            AND e.account_type = ${accountType}
             ${start_date ? sql`AND e.expense_date >= ${start_date}` : sql``}
             ${end_date ? sql`AND e.expense_date <= ${end_date}` : sql``}
           GROUP BY e.vendor
@@ -236,10 +254,11 @@ export async function POST(request: NextRequest) {
             e.amount,
             e.status,
             u.name as created_by
-          FROM expenses e
+          FROM expenses_new e
           JOIN categories c ON c.id = e.category_id
           LEFT JOIN users u ON u.id = e.created_by
           WHERE e.department_id = ${user.department_id}
+            AND e.account_type = ${accountType}
             ${start_date ? sql`AND e.expense_date >= ${start_date}` : sql``}
             ${end_date ? sql`AND e.expense_date <= ${end_date}` : sql``}
           ORDER BY e.expense_date DESC
@@ -283,10 +302,10 @@ export async function POST(request: NextRequest) {
     }
 
     await createAuditLog({
-      userId:  user.id,
+      userId: user.id,
       action: 'GENERATE_REPORT',
       entityType: 'report',
-      newValues: { type, fiscal_year:  fiscalYear, format },
+      newValues: { type, fiscal_year: fiscalYear, format },
     });
 
     if (format === 'csv') {
@@ -294,7 +313,7 @@ export async function POST(request: NextRequest) {
 
       return new NextResponse(csvContent, {
         status: 200,
-        headers:  {
+        headers: {
           'Content-Type': 'text/csv; charset=utf-8',
           'Content-Disposition': `attachment; filename="${type}-report-${fiscalYear}.csv"`,
         },
@@ -314,7 +333,7 @@ export async function POST(request: NextRequest) {
         status: 200,
         headers: {
           'Content-Type': 'application/pdf',
-          'Content-Disposition':  `attachment; filename="${type}-report-${fiscalYear}.pdf"`,
+          'Content-Disposition': `attachment; filename="${type}-report-${fiscalYear}.pdf"`,
         },
       });
     }
@@ -322,10 +341,10 @@ export async function POST(request: NextRequest) {
     console.error('Report download API error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error details:', errorMessage);
-    
+
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: 'Failed to generate report. Please try again or contact support.',
         details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
       },

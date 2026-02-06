@@ -174,7 +174,7 @@ export function hasPermission(userRole: string, requiredRoles: string[]): boolea
 export const ROLE_PERMISSIONS = {
   admin: ['create', 'read', 'update', 'delete', 'approve', 'manage_users', 'manage_budgets', 'view_reports', 'download_reports'],
   hod: ['create', 'read', 'update', 'approve', 'manage_budgets', 'view_reports', 'download_reports'],
-  staff: ['create', 'read', 'view_reports'],
+  staff: ['create', 'read', 'view_reports', 'download_reports'],
 };
 
 export function canPerformAction(role: string, action: string): boolean {

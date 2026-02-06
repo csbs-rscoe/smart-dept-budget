@@ -46,9 +46,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        if (!canPerformAction(user.role, 'download_reports')) {
-            return NextResponse.json({ success: false, error: 'Permission denied' }, { status: 403 });
-        }
+        // Removed download_reports permission check to allow staff access
 
         const body = await request.json();
         const { type, id, format = 'pdf' } = body;
@@ -60,6 +58,14 @@ export async function POST(request: NextRequest) {
         // Fetch department name
         const deptResult = await sql`SELECT name FROM departments WHERE id = ${user.department_id}`;
         const departmentName = deptResult.length > 0 ? deptResult[0].name : 'Department';
+
+        // Account filtering for staff
+        const accountFilter = user.role === 'staff' && user.account_type
+            ? sql`AND account_type = ${user.account_type}`
+            : sql``;
+
+        // Note: For admins/HODs exporting a single item by ID, we don't strictly enforce account_type 
+        // because the ID is specific. But for staff, we want to prevent accessing other accounts' data.
 
         let itemData: any = null;
         let breakdowns: any[] = [];
@@ -74,6 +80,7 @@ export async function POST(request: NextRequest) {
                 LEFT JOIN categories c ON c.id = b.category_id
                 LEFT JOIN users u ON u.id = b.created_by
                 WHERE b.id = ${id} AND b.department_id = ${user.department_id}
+                ${user.role === 'staff' && user.account_type ? sql`AND b.account_type = ${user.account_type}` : sql``}
             `;
 
             if (budgetResult.length === 0) {
@@ -98,6 +105,7 @@ export async function POST(request: NextRequest) {
                 LEFT JOIN budgets b ON b.id = e.budget_id
                 LEFT JOIN users u ON u.id = e.created_by
                 WHERE e.id = ${id} AND e.department_id = ${user.department_id}
+                ${user.role === 'staff' && user.account_type ? sql`AND e.account_type = ${user.account_type}` : sql``}
             `;
 
             if (expenseResult.length === 0) {
@@ -240,20 +248,58 @@ export async function POST(request: NextRequest) {
 
         let y = height - 50;
 
-        // Load and embed logo
+        // Helper to embed image robustly (tries JPG then PNG)
+        const embedImage = async (bytes: Uint8Array) => {
+            try {
+                return await pdfDoc.embedJpg(bytes);
+            } catch {
+                try {
+                    return await pdfDoc.embedPng(bytes);
+                } catch {
+                    return null;
+                }
+            }
+        };
+
+        // Load and embed logo (Left)
         const logoBytes = await loadLogo();
         if (logoBytes) {
-            try {
-                const logoImage = await pdfDoc.embedJpg(logoBytes);
-                const logoDims = logoImage.scale(0.15);
+            const logoImage = await embedImage(logoBytes);
+            if (logoImage) {
+                const logoDims = logoImage.scale(0.45);
                 page.drawImage(logoImage, {
-                    x: 50,
-                    y: y - logoDims.height + 10,
+                    x: 30,
+                    y: y - logoDims.height + 35,
                     width: logoDims.width,
                     height: logoDims.height,
                 });
+            }
+        }
+
+        // Load and embed logo 2 (Right)
+        async function loadLogo2(): Promise<Uint8Array | null> {
+            try {
+                const logoPath = path.join(process.cwd(), 'public', 'logo_2.jpg');
+                if (fs.existsSync(logoPath)) {
+                    return fs.readFileSync(logoPath);
+                }
             } catch (e) {
-                console.log('Could not embed logo:', e);
+                console.log('Logo 2 not loaded:', e);
+            }
+            return null;
+        }
+
+        const logo2Bytes = await loadLogo2();
+        if (logo2Bytes) {
+            const logoImage = await embedImage(logo2Bytes);
+            if (logoImage) {
+                const logoDims = logoImage.scale(0.45);
+                page.drawImage(logoImage, {
+                    x: width - 30 - logoDims.width, // Right aligned
+                    y: y - logoDims.height + 35,
+                    width: logoDims.width,
+                    height: logoDims.height,
+                });
             }
         }
 

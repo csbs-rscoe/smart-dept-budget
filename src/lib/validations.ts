@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // Auth validations
 export const loginSchema = z.object({
-  email:  z.string().email('Invalid email address'),
+  email: z.string().email('Invalid email address'),
   password: z.string().min(4, 'Password must be at least 4 characters'),
 });
 
@@ -20,25 +20,25 @@ export const registerSchema = z.object({
 // Budget validations
 export const budgetPlanSchema = z.object({
   category_id: z.number().int().positive('Category is required'),
-  fiscal_year: z. string().regex(/^\d{4}-\d{2}$/, 'Invalid fiscal year format (e.g., 2024-25)'),
+  fiscal_year: z.string().regex(/^\d{4}-\d{2}$/, 'Invalid fiscal year format (e.g., 2024-25)'),
   proposed_amount: z.number().nonnegative('Amount must be non-negative'),
   justification: z.string().optional(),
 });
 
-export const budgetAllotmentSchema = z. object({
-  category_id: z. number().int().positive('Category is required'),
+export const budgetAllotmentSchema = z.object({
+  category_id: z.number().int().positive('Category is required'),
   fiscal_year: z.string().regex(/^\d{4}-\d{2}$/, 'Invalid fiscal year format'),
-  allotted_amount: z. number().nonnegative('Amount must be non-negative'),
+  allotted_amount: z.number().nonnegative('Amount must be non-negative'),
   notes: z.string().optional(),
 });
 
 // Expense validations
 export const expenseSchema = z.object({
-  category_id: z. number().int().positive('Category is required'),
+  category_id: z.number().int().positive('Category is required'),
   event_id: z.number().int().positive().nullable().optional(),
   amount: z.number().positive('Amount must be positive'),
-  vendor:  z.string().min(1, 'Vendor is required').max(255),
-  expense_date: z. string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
+  vendor: z.string().min(1, 'Vendor is required').max(255),
+  expense_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format'),
   description: z.string().max(1000).optional(),
   invoice_number: z.string().max(100).optional(),
 });
@@ -51,8 +51,8 @@ export const expenseApprovalSchema = z.object({
   (data) => {
     // If status is rejected, require rejection_reason or notes
     if (data.status === 'rejected') {
-      return (data.rejection_reason && data.rejection_reason.length > 0) || 
-             (data.notes && data.notes.length > 0);
+      return (data.rejection_reason && data.rejection_reason.length > 0) ||
+        (data.notes && data.notes.length > 0);
     }
     return true;
   },
@@ -63,13 +63,13 @@ export const expenseApprovalSchema = z.object({
 );
 
 // Filter validations
-export const expenseFiltersSchema = z. object({
-  category_id: z. number().int().positive().optional(),
+export const expenseFiltersSchema = z.object({
+  category_id: z.number().int().positive().optional(),
   status: z.enum(['pending', 'approved', 'rejected']).optional(),
   vendor: z.string().optional(),
-  date_from: z. string().optional(),
-  date_to:  z.string().optional(),
-  event_id: z. number().int().positive().optional(),
+  date_from: z.string().optional(),
+  date_to: z.string().optional(),
+  event_id: z.number().int().positive().optional(),
 });
 
 // Report validations
@@ -79,16 +79,17 @@ export const reportFiltersSchema = z.object({
   start_date: z.string().optional(),
   end_date: z.string().optional(),
   format: z.enum(['pdf', 'csv']).default('pdf'),
+  account_type: z.enum(['acbs', 'innovision', 'infrastructure']).optional(),
 });
 
 // Helper function to validate and parse
-export function validateRequest<T>(schema: z.ZodSchema<T>, data:  unknown): { success: true; data: T } | { success: false; error: string } {
+export function validateRequest<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {
   const result = schema.safeParse(data);
-  
+
   if (!result.success) {
     const errors = result.error.errors.map((e) => e.message).join(', ');
     return { success: false, error: errors };
   }
-  
-  return { success: true, data: result. data };
+
+  return { success: true, data: result.data };
 }

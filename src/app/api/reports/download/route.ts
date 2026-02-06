@@ -20,14 +20,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!canPerformAction(user.role, 'download_reports')) {
-      return NextResponse.json({ success: false, error: 'Permission denied' }, { status: 403 });
-    }
-
     const body = await request.json();
-    const { type, format = 'excel', from_month, to_month, from_year, to_year, year } = body;
+    const { type, format = 'excel', from_month, to_month, from_year, to_year, year, account_type } = body;
     const reportFromYear = from_year || year || new Date().getFullYear().toString();
     const reportToYear = to_year || reportFromYear;
+
+    // Determine effective account type for filtering
+    const effectiveAccountType = user.role === 'staff' && user.account_type
+      ? user.account_type
+      : (account_type || 'acbs');
 
     // Build date range
     const fromDate = from_month ? new Date(parseInt(reportFromYear), parseInt(from_month) - 1, 1) : null;
@@ -77,6 +78,7 @@ export async function POST(request: NextRequest) {
           FROM budgets b
           LEFT JOIN categories c ON c.id = b.category_id
           WHERE b.department_id = ${user.department_id}
+            AND b.account_type = ${effectiveAccountType}
             AND b.budget_date >= ${fromDate.toISOString().split('T')[0]}
             AND b.budget_date <= ${toDate.toISOString().split('T')[0]}
           ORDER BY b.budget_date DESC
@@ -94,6 +96,7 @@ export async function POST(request: NextRequest) {
           FROM budgets b
           LEFT JOIN categories c ON c.id = b.category_id
           WHERE b.department_id = ${user.department_id}
+            AND b.account_type = ${effectiveAccountType}
             AND EXTRACT(YEAR FROM b.budget_date) = ${parseInt(reportFromYear)}
           ORDER BY b.budget_date DESC
         `;
@@ -128,6 +131,7 @@ export async function POST(request: NextRequest) {
           LEFT JOIN budgets b ON b.id = e.budget_id
           LEFT JOIN categories c ON c.id = e.category_id
           WHERE e.department_id = ${user.department_id}
+            AND e.account_type = ${effectiveAccountType}
             AND e.expense_date >= ${fromDate.toISOString().split('T')[0]}
             AND e.expense_date <= ${toDate.toISOString().split('T')[0]}
           ORDER BY e.expense_date DESC
@@ -147,6 +151,7 @@ export async function POST(request: NextRequest) {
           LEFT JOIN budgets b ON b.id = e.budget_id
           LEFT JOIN categories c ON c.id = e.category_id
           WHERE e.department_id = ${user.department_id}
+            AND e.account_type = ${effectiveAccountType}
             AND EXTRACT(YEAR FROM e.expense_date) = ${parseInt(reportFromYear)}
           ORDER BY e.expense_date DESC
         `;
