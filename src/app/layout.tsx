@@ -8,6 +8,9 @@ import AppShell from '../components/layout/AppShell';
 export const metadata = {
   title: 'RSCOE CSBS | Budget Management System',
   description: 'Smart Department Budget Management & Expense Analytics System',
+  icons: {
+    icon: '/logo.jpg',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
