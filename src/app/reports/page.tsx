@@ -43,7 +43,7 @@ interface Semester {
 
 export default function ReportsPage() {
   const { canDownloadReports } = useRole();
-  const { user } = useAuth();
+  const { user, effectiveAccountType } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'budget' | 'expense'>('budget');
   const [fromMonth, setFromMonth] = useState('1');
@@ -72,6 +72,7 @@ export default function ReportsPage() {
         to_month: toMonth,
         from_year: fromYear,
         to_year: toYear,
+        account_type: effectiveAccountType,
       });
 
       const response = await fetch(`/api/reports/report-data?${params}`, {
@@ -93,10 +94,8 @@ export default function ReportsPage() {
   };
 
   useEffect(() => {
-    if (canDownloadReports) {
-      fetchReportData();
-    }
-  }, [activeTab, fromMonth, toMonth, fromYear, toYear, canDownloadReports]);
+    fetchReportData();
+  }, [activeTab, fromMonth, toMonth, fromYear, toYear, effectiveAccountType]);
 
   useEffect(() => {
     const fetchSemesters = async () => {

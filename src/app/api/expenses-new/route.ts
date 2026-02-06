@@ -392,7 +392,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, name, amount, budget_id, category_id, description, spender, payment_method, expense_date, status, rejection_reason, breakdowns } = body;
+    const { id, name, amount, budget_id, category_id, description, spender, payment_method, expense_date, status, rejection_reason, breakdowns, receipts } = body;
 
     if (!id) {
       return NextResponse.json({ success: false, error: 'Expense ID is required' }, { status: 400 });
@@ -420,6 +420,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Expense not found' }, { status: 404 });
     }
 
+    // Handle breakdowns - delete existing and re-insert
     if (breakdowns && Array.isArray(breakdowns)) {
       await sql`DELETE FROM expense_breakdowns WHERE expense_id = ${parseInt(id)}`;
       for (const bd of breakdowns) {
@@ -427,6 +428,19 @@ export async function PUT(request: NextRequest) {
           await sql`
             INSERT INTO expense_breakdowns (expense_id, name, amount, breakdown_date, payment_method)
             VALUES (${parseInt(id)}, ${bd.name}, ${parseFloat(bd.amount)}, ${bd.breakdown_date || null}, ${bd.payment_method || 'cash'})
+          `;
+        }
+      }
+    }
+
+    // Handle receipts - delete existing and re-insert
+    if (receipts && Array.isArray(receipts)) {
+      await sql`DELETE FROM expense_receipts_new WHERE expense_id = ${parseInt(id)}`;
+      for (const receipt of receipts) {
+        if (receipt.file_name && receipt.file_url) {
+          await sql`
+            INSERT INTO expense_receipts_new (expense_id, file_name, file_url, file_type)
+            VALUES (${parseInt(id)}, ${receipt.file_name}, ${receipt.file_url}, ${receipt.file_type || 'image/jpeg'})
           `;
         }
       }

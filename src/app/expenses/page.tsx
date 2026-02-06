@@ -324,6 +324,7 @@ export default function ExpensesPage() {
                     breakdown_date: b.breakdown_date || null,
                     payment_method: b.payment_method,
                 })),
+                receipts: receiptItems,
             };
 
             const response = await fetch('/api/expenses-new', {

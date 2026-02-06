@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import { getCurrentUser, canPerformAction } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,9 +13,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!canPerformAction(user.role, 'download_reports')) {
-      return NextResponse.json({ success: false, error: 'Permission denied' }, { status: 403 });
-    }
+    // Staff can see their own account's reports, HOD/Admin can see all
+    // No permission check needed now - all authenticated users can view reports
 
     const url = new URL(request.url);
     const type = url.searchParams.get('type') || 'budget'; // budget or expense
@@ -23,6 +22,12 @@ export async function GET(request: NextRequest) {
     const toMonth = url.searchParams.get('to_month'); // 1-12
     const fromYear = url.searchParams.get('from_year') || url.searchParams.get('year') || new Date().getFullYear().toString();
     const toYear = url.searchParams.get('to_year') || fromYear;
+
+    // Account type filtering: staff use their fixed type, HOD/Admin use query param
+    const accountTypeParam = url.searchParams.get('account_type');
+    const accountType = user.role === 'staff' && user.account_type
+      ? user.account_type
+      : (accountTypeParam || 'acbs');
 
     let data: any[] = [];
 
@@ -48,6 +53,7 @@ export async function GET(request: NextRequest) {
           LEFT JOIN categories c ON c.id = b.category_id
           LEFT JOIN users u ON u.id = b.created_by
           WHERE b.department_id = ${user.department_id}
+            AND b.account_type = ${accountType}
             AND b.budget_date >= ${fromDate.toISOString().split('T')[0]}
             AND b.budget_date <= ${toDate.toISOString().split('T')[0]}
           ORDER BY b.budget_date DESC
@@ -68,6 +74,7 @@ export async function GET(request: NextRequest) {
           LEFT JOIN categories c ON c.id = b.category_id
           LEFT JOIN users u ON u.id = b.created_by
           WHERE b.department_id = ${user.department_id}
+            AND b.account_type = ${accountType}
             AND EXTRACT(YEAR FROM b.budget_date) = ${parseInt(fromYear)}
           ORDER BY b.budget_date DESC
         `;
@@ -92,6 +99,7 @@ export async function GET(request: NextRequest) {
           LEFT JOIN categories c ON c.id = e.category_id
           LEFT JOIN users u ON u.id = e.created_by
           WHERE e.department_id = ${user.department_id}
+            AND e.account_type = ${accountType}
             AND e.expense_date >= ${fromDate.toISOString().split('T')[0]}
             AND e.expense_date <= ${toDate.toISOString().split('T')[0]}
           ORDER BY e.expense_date DESC
@@ -114,6 +122,7 @@ export async function GET(request: NextRequest) {
           LEFT JOIN categories c ON c.id = e.category_id
           LEFT JOIN users u ON u.id = e.created_by
           WHERE e.department_id = ${user.department_id}
+            AND e.account_type = ${accountType}
             AND EXTRACT(YEAR FROM e.expense_date) = ${parseInt(fromYear)}
           ORDER BY e.expense_date DESC
         `;
@@ -134,6 +143,7 @@ export async function GET(request: NextRequest) {
         fromMonth: fromMonth || '1',
         toMonth: toMonth || '12',
         count: data.length,
+        accountType,
       },
     });
   } catch (error: any) {
@@ -144,3 +154,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
