@@ -155,6 +155,6 @@ export function useRole() {
     isStaff: user?.role === 'staff',
     canApprove: user?.role === 'admin' || user?.role === 'hod',
     canManageBudgets: user?.role === 'admin' || user?.role === 'hod',
-    canDownloadReports: user?.role !== 'staff',
+    canDownloadReports: true, // All users can view/download reports for their account
   };
 }
