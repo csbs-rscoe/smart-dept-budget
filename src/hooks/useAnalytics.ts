@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getCurrentFiscalYear } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
 
 export interface RecentActivity {
   id: number;
@@ -53,10 +54,11 @@ export interface AnalyticsData {
 }
 
 export function useAnalytics(fiscalYear?: string) {
+  const { effectiveAccountType } = useAuth();
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const hasFetched = useRef(false);
+  const prevAccountType = useRef<string | null>(null);
 
   const fetchAnalytics = useCallback(async () => {
     setIsLoading(true);
@@ -64,7 +66,7 @@ export function useAnalytics(fiscalYear?: string) {
 
     try {
       const fy = fiscalYear || getCurrentFiscalYear();
-      const response = await fetch(`/api/analytics?fiscal_year=${fy}`, {
+      const response = await fetch(`/api/analytics?fiscal_year=${fy}&account_type=${effectiveAccountType}`, {
         credentials: 'include',
       });
 
@@ -80,14 +82,20 @@ export function useAnalytics(fiscalYear?: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [fiscalYear]);
+  }, [fiscalYear, effectiveAccountType]);
 
   useEffect(() => {
-    if (!hasFetched.current) {
-      hasFetched.current = true;
+    // Refetch when account type changes
+    if (prevAccountType.current !== effectiveAccountType) {
+      prevAccountType.current = effectiveAccountType;
       fetchAnalytics();
     }
-  }, [fetchAnalytics]);
+  }, [effectiveAccountType, fetchAnalytics]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
 
   return {
     data,

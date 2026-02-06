@@ -68,7 +68,7 @@ interface Semester {
 }
 
 export default function ExpensesPage() {
-    const { user } = useAuth();
+    const { user, effectiveAccountType } = useAuth();
     const { canApprove } = useRole();
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
@@ -118,6 +118,7 @@ export default function ExpensesPage() {
         setIsLoading(true);
         try {
             let url = '/api/expenses-new?';
+            url += `account_type=${effectiveAccountType}&`;
             if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}&`;
             if (filters.category_id) url += `category_id=${filters.category_id}&`;
             if (filters.status) url += `status=${filters.status}&`;
@@ -183,7 +184,7 @@ export default function ExpensesPage() {
         fetchCategories();
         fetchBudgets();
         fetchSemesters();
-    }, [filters]);
+    }, [filters, effectiveAccountType]);
 
     useEffect(() => {
         const debounce = setTimeout(() => {
@@ -273,6 +274,7 @@ export default function ExpensesPage() {
                 amount: parseFloat(formData.amount),
                 budget_id: formData.budget_id ? parseInt(formData.budget_id) : null,
                 category_id: formData.category_id ? parseInt(formData.category_id) : null,
+                account_type: effectiveAccountType,
                 breakdowns: validBreakdowns.map(b => ({
                     name: b.name,
                     amount: parseFloat(b.amount.toString()),

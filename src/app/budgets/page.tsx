@@ -146,7 +146,7 @@ export default function BudgetsPage() {
     fetchBudgets();
     fetchCategories();
     fetchSemesters();
-  }, [filters]);
+  }, [filters, effectiveAccountType]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {

@@ -19,6 +19,12 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const fiscalYear = searchParams.get('fiscal_year') || getCurrentFiscalYear();
 
+    // Account type filtering
+    const accountTypeParam = searchParams.get('account_type');
+    const accountType = user.role === 'staff' && user.account_type
+      ? user.account_type
+      : (accountTypeParam || 'acbs');
+
     // Get budget totals from new budgets table
     const budgetTotals = await sql`
       SELECT 
@@ -28,6 +34,7 @@ export async function GET(request: NextRequest) {
       WHERE department_id = ${user.department_id}
         AND fiscal_year = ${fiscalYear}
         AND status = 'active'
+        AND account_type = ${accountType}
     `;
 
     // Get expense summary from expenses_new table
@@ -41,6 +48,7 @@ export async function GET(request: NextRequest) {
         COUNT(*) as total_count
       FROM expenses_new
       WHERE department_id = ${user.department_id}
+        AND account_type = ${accountType}
     `;
 
     // Fall back to legacy tables if no data in new tables
@@ -64,6 +72,7 @@ export async function GET(request: NextRequest) {
         SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END) as total
       FROM expenses_new
       WHERE department_id = ${user.department_id}
+        AND account_type = ${accountType}
       GROUP BY TO_CHAR(expense_date, 'Mon'), EXTRACT(MONTH FROM expense_date)
       ORDER BY month_num
     `;
@@ -76,6 +85,7 @@ export async function GET(request: NextRequest) {
       FROM categories c
       LEFT JOIN expenses_new e ON e.category_id = c.id 
         AND e.department_id = ${user.department_id}
+        AND e.account_type = ${accountType}
       WHERE c.is_active = true
       GROUP BY c.id, c.name
       HAVING COALESCE(SUM(CASE WHEN e.status = 'approved' THEN e.amount ELSE 0 END), 0) > 0
@@ -91,6 +101,7 @@ export async function GET(request: NextRequest) {
         status
       FROM budgets
       WHERE department_id = ${user.department_id}
+        AND account_type = ${accountType}
       ORDER BY created_at DESC
       LIMIT 5
     `;
@@ -109,6 +120,7 @@ export async function GET(request: NextRequest) {
       LEFT JOIN categories c ON c.id = e.category_id
       LEFT JOIN budgets b ON b.id = e.budget_id
       WHERE e.department_id = ${user.department_id}
+        AND e.account_type = ${accountType}
       ORDER BY e.created_at DESC
       LIMIT 5
     `;
@@ -144,6 +156,7 @@ export async function GET(request: NextRequest) {
         'budget_date' as event_type
       FROM budgets
       WHERE department_id = ${user.department_id}
+        AND account_type = ${accountType}
         AND budget_date >= CURRENT_DATE
         AND status = 'active'
       ORDER BY budget_date ASC
