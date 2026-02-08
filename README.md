@@ -3,11 +3,11 @@
 
 An advanced, digital solution for academic departments to streamline budget planning, track real-time expenses, verify receipts, and generate insightful analytics. 
 
-## 🚀 Overview
+## Overview
 
 This project addresses the challenges faced by academic departments in managing annual budgets. By replacing traditional spreadsheets with a centralized web application, it ensures transparency, accelerates approval cycles, and simplifies audit compliance (NBA/NAAC).
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 This project leverages a modern, serverless architecture for performance, scalability, and ease of deployment.
 
@@ -42,7 +42,7 @@ This project leverages a modern, serverless architecture for performance, scalab
 - **Platform:** [Vercel](https://vercel.com/) - Frontend and Serverless Function hosting.
 - **CI/CD:** Vercel for Git integration (automatic deployments).
 
-## ✨ Key Features
+## Key Features
 
 - **Budget Planning:** Create comprehensive budgets with breakdowns (e.g., equipment, events, FDPs).
 - **Expense Tracking:** Real-time logging of expenses against specific budget allocations.
@@ -54,58 +54,6 @@ This project leverages a modern, serverless architecture for performance, scalab
 - **Analytics Dashboard:** Visualize spending trends, category-wise breakdowns, and remaining funds.
 - **Report Generation:** One-click PDF and Excel reports for audits and accreditation.
 
-## 🏁 Getting Started
-
-### Prerequisites
-- Node.js 18+
-- npm or yarn
-- A Neon DB account
-- A Cloudinary account
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-username/smart-dept-budget.git
-   cd smart-dept-budget
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Environment Setup:**
-   Create a `.env.local` file in the root directory and add the following variables:
-   ```env
-   # Database
-   DATABASE_URL="postgresql://user:password@ep-cool-project-123456.us-east-2.aws.neon.tech/neondb?sslmode=require"
-
-   # Authentication
-   JWT_SECRET="your-super-secret-jwt-key"
-
-   # Cloudinary
-   CLOUDINARY_CLOUD_NAME="your-cloud-name"
-   CLOUDINARY_API_KEY="your-api-key"
-   CLOUDINARY_API_SECRET="your-api-secret"
-   ```
-
-4. **Initialize Database:**
-   Run the migration/seed script to set up tables and initial data.
-   ```bash
-   # Seeds the database with demo data
-   npm run seed
-   
-   # Or explicitly reset and seed:
-   npx tsx scripts/seed.ts --reset
-   ```
-
-5. **Run Development Server:**
-   ```bash
-   npm run dev
-   ```
-
-   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## 📂 Project Structure
 
@@ -122,15 +70,6 @@ This project leverages a modern, serverless architecture for performance, scalab
 └── package.json        # Project dependencies and scripts
 ```
 
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome!
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
 ## 📄 License
 
