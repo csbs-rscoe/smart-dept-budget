@@ -384,7 +384,7 @@ export default function MiscellaneousPage() {
                         </div>
                     ) : (
                         <div className="text-center py-6 text-slate-500">
-                            <p>No corpus configured. Click "Setup ACBS Bank Account" to set the total bank balance for ACBS.</p>
+                            <p>No corpus configured. Click &quot;Setup ACBS Bank Account&quot; to set the total bank balance for ACBS.</p>
                         </div>
                     )}
                 </div>
