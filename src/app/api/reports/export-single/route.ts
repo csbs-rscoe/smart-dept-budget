@@ -74,14 +74,25 @@ export async function POST(request: NextRequest) {
         let totalAmount = 0;
 
         if (type === 'budget') {
-            const budgetResult = await sql`
-                SELECT b.*, c.name as category_name, u.name as created_by_name
-                FROM budgets b
-                LEFT JOIN categories c ON c.id = b.category_id
-                LEFT JOIN users u ON u.id = b.created_by
-                WHERE b.id = ${id} AND b.department_id = ${user.department_id}
-                ${user.role === 'staff' && user.account_type ? sql`AND b.account_type = ${user.account_type}` : sql``}
-            `;
+            let budgetResult: any[];
+            if (user.role === 'staff' && user.account_type) {
+                budgetResult = await sql`
+                    SELECT b.*, c.name as category_name, u.name as created_by_name
+                    FROM budgets b
+                    LEFT JOIN categories c ON c.id = b.category_id
+                    LEFT JOIN users u ON u.id = b.created_by
+                    WHERE b.id = ${id} AND b.department_id = ${user.department_id}
+                    AND b.account_type = ${user.account_type}
+                `;
+            } else {
+                budgetResult = await sql`
+                    SELECT b.*, c.name as category_name, u.name as created_by_name
+                    FROM budgets b
+                    LEFT JOIN categories c ON c.id = b.category_id
+                    LEFT JOIN users u ON u.id = b.created_by
+                    WHERE b.id = ${id} AND b.department_id = ${user.department_id}
+                `;
+            }
 
             if (budgetResult.length === 0) {
                 return NextResponse.json({ success: false, error: 'Budget not found' }, { status: 404 });
@@ -98,15 +109,27 @@ export async function POST(request: NextRequest) {
             dateStr = formatDate(itemData.budget_date, 'dd MMM yyyy');
             totalAmount = Number(itemData.amount);
         } else if (type === 'expense') {
-            const expenseResult = await sql`
-                SELECT e.*, c.name as category_name, b.name as budget_name, u.name as created_by_name
-                FROM expenses_new e
-                LEFT JOIN categories c ON c.id = e.category_id
-                LEFT JOIN budgets b ON b.id = e.budget_id
-                LEFT JOIN users u ON u.id = e.created_by
-                WHERE e.id = ${id} AND e.department_id = ${user.department_id}
-                ${user.role === 'staff' && user.account_type ? sql`AND e.account_type = ${user.account_type}` : sql``}
-            `;
+            let expenseResult: any[];
+            if (user.role === 'staff' && user.account_type) {
+                expenseResult = await sql`
+                    SELECT e.*, c.name as category_name, b.name as budget_name, u.name as created_by_name
+                    FROM expenses_new e
+                    LEFT JOIN categories c ON c.id = e.category_id
+                    LEFT JOIN budgets b ON b.id = e.budget_id
+                    LEFT JOIN users u ON u.id = e.created_by
+                    WHERE e.id = ${id} AND e.department_id = ${user.department_id}
+                    AND e.account_type = ${user.account_type}
+                `;
+            } else {
+                expenseResult = await sql`
+                    SELECT e.*, c.name as category_name, b.name as budget_name, u.name as created_by_name
+                    FROM expenses_new e
+                    LEFT JOIN categories c ON c.id = e.category_id
+                    LEFT JOIN budgets b ON b.id = e.budget_id
+                    LEFT JOIN users u ON u.id = e.created_by
+                    WHERE e.id = ${id} AND e.department_id = ${user.department_id}
+                `;
+            }
 
             if (expenseResult.length === 0) {
                 return NextResponse.json({ success: false, error: 'Expense not found' }, { status: 404 });
