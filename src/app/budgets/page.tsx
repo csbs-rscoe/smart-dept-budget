@@ -48,6 +48,15 @@ interface Semester {
   end_date: string;
 }
 
+interface CorpusData {
+  amount: number;
+  bankName: string;
+  accountNumber: string;
+  totalBudgets: number;
+  unallocated: number;
+  isConfigured: boolean;
+}
+
 export default function BudgetsPage() {
   const { user, effectiveAccountType } = useAuth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -87,6 +96,9 @@ export default function BudgetsPage() {
   const [breakdownItems, setBreakdownItems] = useState<BudgetBreakdown[]>([
     { name: '', amount: '', payment_method: 'cash' },
   ]);
+
+  // ACBS Corpus state for budget validation
+  const [corpus, setCorpus] = useState<CorpusData | null>(null);
 
   const fetchBudgets = async () => {
     setIsLoading(true);
@@ -147,6 +159,26 @@ export default function BudgetsPage() {
     fetchCategories();
     fetchSemesters();
   }, [filters, effectiveAccountType]);
+
+  // Fetch corpus for ACBS accounts
+  useEffect(() => {
+    const fetchCorpus = async () => {
+      if (effectiveAccountType !== 'acbs') {
+        setCorpus(null);
+        return;
+      }
+      try {
+        const response = await fetch('/api/corpus', { credentials: 'include' });
+        const result = await response.json();
+        if (result.success) {
+          setCorpus(result.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch corpus:', err);
+      }
+    };
+    fetchCorpus();
+  }, [effectiveAccountType]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -538,6 +570,35 @@ export default function BudgetsPage() {
         </div>
       </div>
 
+      {/* ACBS Corpus Summary - Show below total budget for ACBS accounts */}
+      {corpus?.isConfigured && effectiveAccountType === 'acbs' && (
+        <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <span className="text-lg font-medium text-slate-700">ACBS Corpus</span>
+              {corpus.bankName && (
+                <span className="text-xs text-slate-500 ml-2">({corpus.bankName})</span>
+              )}
+            </div>
+            <span className="text-xs text-blue-600 font-medium">Bank Balance</span>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="p-3 bg-white rounded-lg border border-blue-200 text-center">
+              <p className="text-xs text-blue-600 mb-1">Corpus</p>
+              <p className="text-lg font-bold text-blue-700">{formatCurrency(corpus.amount)}</p>
+            </div>
+            <div className="p-3 bg-white rounded-lg border border-slate-200 text-center">
+              <p className="text-xs text-slate-500 mb-1">Allocated</p>
+              <p className="text-lg font-semibold text-slate-700">{formatCurrency(corpus.totalBudgets)}</p>
+            </div>
+            <div className={`p-3 rounded-lg border text-center ${corpus.unallocated >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+              <p className={`text-xs mb-1 ${corpus.unallocated >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>Unallocated</p>
+              <p className={`text-lg font-semibold ${corpus.unallocated >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{formatCurrency(corpus.unallocated)}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Budget Modal */}
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Budget" size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -557,6 +618,37 @@ export default function BudgetsPage() {
               required
             />
           </div>
+
+          {/* ACBS Corpus Warning */}
+          {corpus?.isConfigured && effectiveAccountType === 'acbs' && formData.amount && (
+            (() => {
+              const enteredAmount = parseFloat(formData.amount) || 0;
+              const wouldExceed = enteredAmount > corpus.unallocated;
+              const exceededBy = enteredAmount - corpus.unallocated;
+
+              if (wouldExceed) {
+                return (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <div>
+                        <p className="text-sm font-medium text-amber-800">Budget exceeds unallocated corpus</p>
+                        <p className="text-xs text-amber-600 mt-1">
+                          This budget exceeds the unallocated corpus by {formatCurrency(exceededBy)}
+                        </p>
+                        <p className="text-xs text-amber-600">
+                          (Corpus: {formatCurrency(corpus.amount)} | Allocated: {formatCurrency(corpus.totalBudgets)} | Unallocated: {formatCurrency(corpus.unallocated)})
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>

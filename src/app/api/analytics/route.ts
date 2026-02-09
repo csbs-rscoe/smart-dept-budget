@@ -64,6 +64,33 @@ export async function GET(request: NextRequest) {
       totalBudget = Number(legacyBudget[0]?.total_allotted || 0);
     }
 
+    // Fetch ACBS corpus data if viewing ACBS account
+    let corpusData = null;
+    if (accountType === 'acbs') {
+      const corpusResult = await sql`
+        SELECT key, value 
+        FROM app_settings 
+        WHERE key LIKE 'acbs_corpus%'
+      `;
+
+      if (corpusResult.length > 0) {
+        const corpusAmount = corpusResult.find((r: any) => r.key === 'acbs_corpus_amount');
+        const corpusBankName = corpusResult.find((r: any) => r.key === 'acbs_corpus_bank_name');
+        const corpusLastUpdated = corpusResult.find((r: any) => r.key === 'acbs_corpus_last_updated');
+
+        const amount = parseFloat(corpusAmount?.value || '0');
+        if (amount > 0) {
+          corpusData = {
+            amount,
+            bankName: corpusBankName?.value || '',
+            lastUpdated: corpusLastUpdated?.value || '',
+            totalBudgets: totalBudget,
+            unallocated: amount - totalBudget,
+          };
+        }
+      }
+    }
+
     // Get monthly trend from expenses_new
     const monthlyTrend = await sql`
       SELECT 
@@ -214,6 +241,7 @@ export async function GET(request: NextRequest) {
           approvedCount: Number(expenseSummary[0]?.approved_count || 0),
           rejectedCount: Number(expenseSummary[0]?.rejected_count || 0),
           budgetCount: Number(budgetTotals[0]?.budget_count || 0),
+          corpus: corpusData,
         },
         monthlyTrend: monthlyTrend.map((m: any) => ({
           month: m.month,

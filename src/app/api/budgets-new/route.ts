@@ -298,6 +298,38 @@ export async function POST(request: NextRequest) {
       ? user.account_type
       : (bodyAccountType || 'acbs');
 
+    // Corpus validation for ACBS accounts
+    let corpusWarning = null;
+    if (accountType === 'acbs') {
+      // Fetch corpus amount
+      const corpusResult = await sql`
+        SELECT value FROM app_settings WHERE key = 'acbs_corpus_amount'
+      `;
+      const corpusAmount = parseFloat(corpusResult[0]?.value || '0');
+
+      if (corpusAmount > 0) {
+        // Fetch current total budgets for ACBS
+        const currentTotalResult = await sql`
+          SELECT COALESCE(SUM(amount), 0) as total
+          FROM budgets
+          WHERE account_type = 'acbs'
+          AND status = 'active'
+        `;
+        const currentTotal = Number(currentTotalResult[0]?.total || 0);
+        const newTotal = currentTotal + parseFloat(amount);
+
+        if (newTotal > corpusAmount) {
+          corpusWarning = {
+            message: `This budget exceeds the unallocated corpus by ₹${(newTotal - corpusAmount).toLocaleString('en-IN')}`,
+            corpus: corpusAmount,
+            currentTotal,
+            newTotal,
+            exceededBy: newTotal - corpusAmount,
+          };
+        }
+      }
+    }
+
     const fiscalYear = getFiscalYear(budget_date ? new Date(budget_date) : new Date());
 
     const result = await sql`
@@ -333,7 +365,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, data: result[0], message: 'Budget created successfully' });
+    return NextResponse.json({
+      success: true,
+      data: result[0],
+      message: 'Budget created successfully',
+      corpusWarning,
+    });
   } catch (err) {
     console.error('Budgets POST error:', err);
     return NextResponse.json({ success: false, error: 'Failed to create budget' }, { status: 500 });

@@ -200,6 +200,41 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* ACBS Corpus Information - Only show for ACBS accounts with configured corpus */}
+      {summary.corpus && (
+        <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold text-slate-900">ACBS Corpus</h3>
+              {summary.corpus.bankName && (
+                <p className="text-xs text-slate-500">{summary.corpus.bankName}</p>
+              )}
+            </div>
+            <span className="text-xs text-blue-600 font-medium">Total Bank Balance</span>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="p-3 bg-white rounded-lg border border-blue-200">
+              <p className="text-xs text-blue-600 mb-1">Corpus</p>
+              <p className="text-lg font-bold text-blue-700">
+                {formatCurrency(summary.corpus.amount)}
+              </p>
+            </div>
+            <div className="p-3 bg-white rounded-lg border border-slate-200">
+              <p className="text-xs text-slate-500 mb-1">Total Budgets</p>
+              <p className="text-lg font-semibold text-slate-700">
+                {formatCurrency(summary.corpus.totalBudgets)}
+              </p>
+            </div>
+            <div className={`p-3 rounded-lg border ${summary.corpus.unallocated >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+              <p className={`text-xs mb-1 ${summary.corpus.unallocated >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>Unallocated</p>
+              <p className={`text-lg font-semibold ${summary.corpus.unallocated >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                {formatCurrency(summary.corpus.unallocated)}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Recent Activity & Upcoming Events */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activity */}

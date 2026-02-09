@@ -38,6 +38,13 @@ export interface AnalyticsData {
     approvedCount: number;
     rejectedCount: number;
     budgetCount: number;
+    corpus: {
+      amount: number;
+      bankName: string;
+      lastUpdated: string;
+      totalBudgets: number;
+      unallocated: number;
+    } | null;
   };
   monthlyTrend: Array<{ month: string; total: number }>;
   categoryBreakdown: Array<{ category: string; total: number }>;
