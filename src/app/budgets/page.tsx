@@ -54,6 +54,8 @@ interface CorpusData {
   accountNumber: string;
   totalBudgets: number;
   unallocated: number;
+  totalExpenses: number;
+  remainingBalance: number;
   isConfigured: boolean;
 }
 
@@ -588,12 +590,12 @@ export default function BudgetsPage() {
               <p className="text-lg font-bold text-blue-700">{formatCurrency(corpus.amount)}</p>
             </div>
             <div className="p-3 bg-white rounded-lg border border-slate-200 text-center">
-              <p className="text-xs text-slate-500 mb-1">Allocated</p>
-              <p className="text-lg font-semibold text-slate-700">{formatCurrency(corpus.totalBudgets)}</p>
+              <p className="text-xs text-slate-500 mb-1">Total Expenses</p>
+              <p className="text-lg font-semibold text-slate-700">{formatCurrency(corpus.totalExpenses)}</p>
             </div>
-            <div className={`p-3 rounded-lg border text-center ${corpus.unallocated >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-              <p className={`text-xs mb-1 ${corpus.unallocated >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>Unallocated</p>
-              <p className={`text-lg font-semibold ${corpus.unallocated >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{formatCurrency(corpus.unallocated)}</p>
+            <div className={`p-3 rounded-lg border text-center ${corpus.remainingBalance >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+              <p className={`text-xs mb-1 ${corpus.remainingBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>Remaining Balance</p>
+              <p className={`text-lg font-bold ${corpus.remainingBalance >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{formatCurrency(corpus.remainingBalance)}</p>
             </div>
           </div>
         </div>
