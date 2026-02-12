@@ -158,7 +158,6 @@ async function seed() {
   console.log('Creating users...');
   const passwordHash = await bcrypt.hash('Admin@123', 12);
   const users = [
-    { id: 1, name: 'System Administrator', email: 'admin@rscoe.edu.in', role: 'admin' },
     { id: 2, name: 'Dr. Kavita Moholkar', email: 'hod@rscoe.edu.in', role: 'hod' },
     { id: 3, name: 'Prof. Rahul Sharma', email: 'staff@rscoe.edu.in', role: 'staff' },
   ];
@@ -191,9 +190,9 @@ async function seed() {
     VALUES 
       (1, 2, 'Lab Computer Upgrade', 250000, 'Purchase of 20 new Dell OptiPlex computers for Lab 3 with monitors and peripherals', 'College Fund', 'cheque', '2025-08-15', ${fiscalYear}, 'active', 2),
       (1, 6, 'TechFest Hackathon 2025', 75000, 'Annual department hackathon with cash prizes, food, and certificates', 'Industry Sponsorship', 'online', '2025-09-01', ${fiscalYear}, 'active', 2),
-      (1, 3, 'Annual Software Licenses', 120000, 'MATLAB, Microsoft Office 365, and JetBrains IDE licenses for faculty and students', 'Department Budget', 'online', '2025-07-10', ${fiscalYear}, 'active', 1),
+      (1, 3, 'Annual Software Licenses', 120000, 'MATLAB, Microsoft Office 365, and JetBrains IDE licenses for faculty and students', 'Department Budget', 'online', '2025-07-10', ${fiscalYear}, 'active', 2),
       (1, 4, 'AI/ML Faculty Development Program', 85000, '5-day FDP on Artificial Intelligence and Machine Learning for faculty members', 'AICTE Grant', 'cheque', '2025-10-01', ${fiscalYear}, 'active', 2),
-      (1, 1, 'Seminar Hall Renovation', 150000, 'New furniture, projector, and sound system for the department seminar hall', 'College Fund', 'cheque', '2025-11-01', ${fiscalYear}, 'completed', 1)
+      (1, 1, 'Seminar Hall Renovation', 150000, 'New furniture, projector, and sound system for the department seminar hall', 'College Fund', 'cheque', '2025-11-01', ${fiscalYear}, 'completed', 2)
     RETURNING id, name
   `;
 
@@ -290,19 +289,18 @@ async function seed() {
   const softwareBudget = budgetResults.find((b: any) => b.name === 'Annual Software Licenses');
   await sql`
     INSERT INTO expenses_new (department_id, budget_id, category_id, name, amount, description, spender, payment_method, expense_date, status, created_by)
-    VALUES (1, ${softwareBudget?.id || null}, 3, 'MATLAB Academic License', 45000, 'Annual MATLAB license for 50 seats', 'IT Department', 'online', '2025-08-01', 'approved', 1)
+    VALUES (1, ${softwareBudget?.id || null}, 3, 'MATLAB Academic License', 45000, 'Annual MATLAB license for 50 seats', 'IT Department', 'online', '2025-08-01', 'approved', 2)
   `;
 
   console.log('\n✅ Database seeded successfully!');
   console.log('\n📊 Data Summary:');
   console.log('  • 1 Department (CSBS)');
   console.log('  • 8 Categories');
-  console.log('  • 3 Users (Admin, HOD, Staff)');
+  console.log('  • 2 Users (HOD, Staff)');
   console.log('  • 4 Semesters (2 academic years)');
   console.log('  • 5 Budgets with breakdowns');
   console.log('  • 6 Expenses (approved, pending, rejected)');
   console.log('\n🔐 Login credentials (all passwords: Admin@123):');
-  console.log('  • admin@rscoe.edu.in (Admin - full access)');
   console.log('  • hod@rscoe.edu.in (HOD - can approve/reject)');
   console.log('  • staff@rscoe.edu.in (Staff - can create only)');
 }

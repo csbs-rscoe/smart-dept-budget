@@ -34,7 +34,7 @@ export default function LoginPage() {
 
   const fillCredentials = (userEmail: string) => {
     setEmail(userEmail);
-    setPassword('Admin@123');
+    setPassword('Admin@123'); // Default password for seeded users
     setError('');
   };
 
@@ -143,7 +143,6 @@ export default function LoginPage() {
               <p className="text-xs text-slate-500 text-center mb-3">Quick Login (click to autofill)</p>
               <div className="space-y-2">
                 {[
-                  { email: 'admin@rscoe.edu.in', role: 'Admin', password: 'Admin@123' },
                   { email: 'hod@rscoe.edu.in', role: 'HOD', password: 'Admin@123' },
                   { email: 'acbs@rscoe.edu.in', role: 'ACBS Staff', password: 'ACBS@123' },
                   { email: 'innovision@rscoe.edu.in', role: 'Innovision', password: 'Innovision@123' },
@@ -166,7 +165,7 @@ export default function LoginPage() {
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-slate-400 text-center mt-3">HOD/Admin: Admin@123 | Staff accounts: their respective passwords</p>
+              <p className="text-xs text-slate-400 text-center mt-3">HOD: Admin@123 | Staff accounts: their respective passwords</p>
             </div>
           </div>
 
