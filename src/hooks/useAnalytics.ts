@@ -44,6 +44,8 @@ export interface AnalyticsData {
       lastUpdated: string;
       totalBudgets: number;
       unallocated: number;
+      totalExpenses: number;
+      remainingBalance: number;
     } | null;
   };
   monthlyTrend: Array<{ month: string; total: number }>;

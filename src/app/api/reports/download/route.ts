@@ -58,6 +58,14 @@ export async function POST(request: NextRequest) {
       generatedAt: formatDate(new Date(), 'dd MMM yyyy HH:mm'),
     };
 
+    // Fetch ACBS corpus for remaining balance in reports
+    let corpusAmount: number | undefined;
+    if (effectiveAccountType === 'acbs') {
+      const corpusResult = await sql`SELECT value FROM app_settings WHERE key = 'acbs_corpus_amount'`;
+      const amt = parseFloat(corpusResult[0]?.value || '0');
+      if (amt > 0) corpusAmount = amt;
+    }
+
     let filename = '';
     let contentType = '';
     let buffer: Buffer;
@@ -105,11 +113,11 @@ export async function POST(request: NextRequest) {
       const options = { ...reportOptions, title: 'Budget Report' };
 
       if (format === 'excel') {
-        buffer = await generateBudgetReportExcel(data, options);
+        buffer = await generateBudgetReportExcel(data, options, corpusAmount);
         filename = `budget-report-${reportFromYear}${reportFromYear !== reportToYear ? '-' + reportToYear : ''}.xlsx`;
         contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
       } else {
-        buffer = await generateBudgetReportPDF(data, options);
+        buffer = await generateBudgetReportPDF(data, options, corpusAmount);
         filename = `budget-report-${reportFromYear}${reportFromYear !== reportToYear ? '-' + reportToYear : ''}.pdf`;
         contentType = 'application/pdf';
       }
@@ -160,11 +168,11 @@ export async function POST(request: NextRequest) {
       const options = { ...reportOptions, title: 'Expense Report' };
 
       if (format === 'excel') {
-        buffer = await generateExpenseReportExcel(data, options);
+        buffer = await generateExpenseReportExcel(data, options, corpusAmount);
         filename = `expense-report-${reportFromYear}${reportFromYear !== reportToYear ? '-' + reportToYear : ''}.xlsx`;
         contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
       } else {
-        buffer = await generateExpenseReportPDF(data, options);
+        buffer = await generateExpenseReportPDF(data, options, corpusAmount);
         filename = `expense-report-${reportFromYear}${reportFromYear !== reportToYear ? '-' + reportToYear : ''}.pdf`;
         contentType = 'application/pdf';
       }

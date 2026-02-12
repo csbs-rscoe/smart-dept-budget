@@ -61,6 +61,7 @@ export default function ReportsPage() {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isSingleExporting, setIsSingleExporting] = useState<string | null>(null);
+  const [corpusAmount, setCorpusAmount] = useState<number | undefined>(undefined);
 
   const fetchReportData = async () => {
     setIsLoading(true);
@@ -96,6 +97,24 @@ export default function ReportsPage() {
   useEffect(() => {
     fetchReportData();
   }, [activeTab, fromMonth, toMonth, fromYear, toYear, effectiveAccountType]);
+
+  // Fetch corpus amount for ACBS reports
+  useEffect(() => {
+    if (effectiveAccountType === 'acbs') {
+      fetch('/api/corpus', { credentials: 'include' })
+        .then(r => r.json())
+        .then(result => {
+          if (result.success && result.data?.amount) {
+            setCorpusAmount(result.data.amount);
+          } else {
+            setCorpusAmount(undefined);
+          }
+        })
+        .catch(() => setCorpusAmount(undefined));
+    } else {
+      setCorpusAmount(undefined);
+    }
+  }, [effectiveAccountType]);
 
   useEffect(() => {
     const fetchSemesters = async () => {
@@ -380,6 +399,7 @@ export default function ReportsPage() {
         dateRange={getDateRangeString()}
         isLoading={isLoading}
         onRowClick={handleRowClick}
+        corpusAmount={corpusAmount}
       />
 
       {/* Export Buttons */}

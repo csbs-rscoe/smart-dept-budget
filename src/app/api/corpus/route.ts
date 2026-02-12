@@ -58,8 +58,18 @@ export async function GET(request: NextRequest) {
             AND status = 'active'
         `;
 
+        // Get total approved expenses for ACBS
+        const expenseTotal = await sql`
+            SELECT COALESCE(SUM(amount), 0) as total
+            FROM expenses_new
+            WHERE account_type = 'acbs'
+            AND status = 'approved'
+        `;
+
         const totalBudgets = Number(budgetTotal[0]?.total || 0);
         const unallocated = corpus.amount - totalBudgets;
+        const totalExpenses = Number(expenseTotal[0]?.total || 0);
+        const remainingBalance = corpus.amount - totalExpenses;
 
         return NextResponse.json({
             success: true,
@@ -67,6 +77,8 @@ export async function GET(request: NextRequest) {
                 ...corpus,
                 totalBudgets,
                 unallocated,
+                totalExpenses,
+                remainingBalance,
                 isConfigured: corpus.amount > 0,
             },
         });
@@ -79,7 +91,7 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// POST - Create/Update ACBS corpus (admin only)
+// POST - Create/Update ACBS corpus (HOD only)
 export async function POST(request: NextRequest) {
     try {
         const user = await getCurrentUser();
@@ -87,8 +99,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        if (user.role !== 'admin') {
-            return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
+        if (user.role !== 'hod') {
+            return NextResponse.json({ success: false, error: 'HOD access required' }, { status: 403 });
         }
 
         const body = await request.json();

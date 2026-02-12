@@ -26,10 +26,16 @@ const nav = [
     icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z'
   },
   {
+    label: 'ACBS Bank Account',
+    href: '/acbs-bank-account',
+    icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
+    hodOnly: true
+  },
+  {
     label: 'Miscellaneous',
     href: '/miscellaneous',
     icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
-    adminOnly: true
+    hodOnly: true
   },
 ];
 
@@ -41,7 +47,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`hidden md:flex flex-col h-screen sticky top-0 border-r border-slate-200 bg-white transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'
+      className={`hidden md:flex flex-col h-screen sticky top-0 border-r border-slate-200 bg-white transition-all duration-300 overflow-visible ${isCollapsed ? 'w-16' : 'w-64'
         }`}
     >
       {/* Logo & Header */}
@@ -49,8 +55,8 @@ export default function Sidebar() {
         <img src="/logo.jpg" alt="RSCOE Logo" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
         {!isCollapsed && (
           <div className="min-w-0">
-            <div className="text-xs font-bold text-brandNavy truncate">JSPM&apos;s RSCOE</div>
-            <div className="text-[10px] text-slate-500 truncate">Computer Science & Business Systems</div>
+            <div className="text-xs font-bold text-brandNavy leading-tight">JSPM&apos;s RSCOE</div>
+            <div className="text-[10px] text-slate-500 leading-tight">Computer Science &amp; Business Systems</div>
           </div>
         )}
       </div>
@@ -58,22 +64,22 @@ export default function Sidebar() {
       {/* Collapse Toggle */}
       <button
         onClick={toggle}
-        className="absolute -right-3 top-16 bg-white border border-slate-200 rounded-full p-1 shadow-sm hover:bg-slate-50 z-10"
+        className="absolute -right-3.5 top-16 bg-white border border-slate-200 rounded-full w-7 h-7 flex items-center justify-center shadow-md hover:bg-slate-50 hover:shadow-lg z-20 transition-all"
       >
         <svg
-          className={`w-4 h-4 text-slate-600 transition-transform ${isCollapsed ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-slate-600 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
         </svg>
       </button>
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
         {nav
-          .filter((item) => !item.adminOnly || user?.role === 'admin')
+          .filter((item) => !item.hodOnly || user?.role === 'hod')
           .map((item) => {
             const isActive = pathname === item.href;
             return (

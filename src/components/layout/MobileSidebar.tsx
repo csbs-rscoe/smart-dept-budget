@@ -8,8 +8,10 @@ const nav = [
   { label: 'Dashboard', href: '/' },
   { label: 'Budgets', href: '/budgets' },
   { label: 'Expenses', href: '/expenses' },
-  { label:  'Receipts', href: '/receipts' },
+  { label: 'Receipts', href: '/receipts' },
   { label: 'Reports', href: '/reports' },
+  { label: 'ACBS Bank Account', href: '/acbs-bank-account', hodOnly: true },
+  { label: 'Miscellaneous', href: '/miscellaneous', hodOnly: true },
 ];
 
 export default function MobileSidebar() {
@@ -31,18 +33,19 @@ export default function MobileSidebar() {
           </div>
         </div>
         <nav className="p-4 space-y-1">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item. href}
-              onClick={closeMobile}
-              className={`block px-4 py-2.5 rounded-lg text-sm font-medium ${
-                pathname === item.href ?  'bg-brandNavy/10 text-brandNavy' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {nav
+            .filter((item) => !item.hodOnly || user?.role === 'hod')
+            .map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={closeMobile}
+                className={`block px-4 py-2.5 rounded-lg text-sm font-medium ${pathname === item.href ? 'bg-brandNavy/10 text-brandNavy' : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+              >
+                {item.label}
+              </Link>
+            ))}
         </nav>
         {user && (
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200">

@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// POST - Create new semester (Admin only)
+// POST - Create new semester (HOD only)
 export async function POST(request: NextRequest) {
     try {
         const user = await getCurrentUser();
@@ -58,8 +58,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        if (user.role !== 'admin') {
-            return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
+        if (user.role !== 'hod') {
+            return NextResponse.json({ success: false, error: 'HOD access required' }, { status: 403 });
         }
 
         const body = await request.json();
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// PUT - Update semester (Admin only)
+// PUT - Update semester (HOD only)
 export async function PUT(request: NextRequest) {
     try {
         const user = await getCurrentUser();
@@ -110,8 +110,8 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        if (user.role !== 'admin') {
-            return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
+        if (user.role !== 'hod') {
+            return NextResponse.json({ success: false, error: 'HOD access required' }, { status: 403 });
         }
 
         const body = await request.json();
@@ -155,7 +155,7 @@ export async function PUT(request: NextRequest) {
     }
 }
 
-// DELETE - Delete semester (Admin only)
+// DELETE - Delete semester (HOD only)
 export async function DELETE(request: NextRequest) {
     try {
         const user = await getCurrentUser();
@@ -163,8 +163,8 @@ export async function DELETE(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        if (user.role !== 'admin') {
-            return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
+        if (user.role !== 'hod') {
+            return NextResponse.json({ success: false, error: 'HOD access required' }, { status: 403 });
         }
 
         const url = new URL(request.url);

@@ -68,7 +68,8 @@ function formatCurrencyPDF(amount: number): string {
 
 export async function generateBudgetReportPDF(
     data: BudgetData[],
-    options: ReportOptions
+    options: ReportOptions,
+    corpusAmount?: number
 ): Promise<Buffer> {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595, 842]); // A4
@@ -232,6 +233,15 @@ export async function generateBudgetReportPDF(
     page.drawText('TOTAL:', { x: 350, y, size: 11, font: fontBold, color: BRAND_NAVY });
     page.drawText(formatCurrencyPDF(total), { x: 420, y, size: 11, font: fontBold, color: BRAND_NAVY });
 
+    // Remaining balance row for ACBS reports
+    if (corpusAmount !== undefined) {
+        const remainingBalance = corpusAmount - total;
+        const balColor = remainingBalance >= 0 ? rgb(0.02, 0.47, 0.34) : rgb(0.86, 0.15, 0.15);
+        y -= 18;
+        page.drawText('REMAINING BALANCE:', { x: 300, y, size: 10, font: fontBold, color: balColor });
+        page.drawText(formatCurrencyPDF(remainingBalance), { x: 420, y, size: 10, font: fontBold, color: balColor });
+    }
+
     // Signature section
     y = 130;
     page.drawLine({ start: { x: 50, y: y + 30 }, end: { x: width - 50, y: y + 30 }, thickness: 0.5, color: rgb(0.7, 0.7, 0.7) });
@@ -259,7 +269,8 @@ export async function generateBudgetReportPDF(
 
 export async function generateExpenseReportPDF(
     data: ExpenseData[],
-    options: ReportOptions
+    options: ReportOptions,
+    corpusAmount?: number
 ): Promise<Buffer> {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595, 842]); // A4
@@ -420,6 +431,15 @@ export async function generateExpenseReportPDF(
     y -= 15;
     page.drawText('TOTAL:', { x: 300, y, size: 11, font: fontBold, color: BRAND_NAVY });
     page.drawText(formatCurrencyPDF(total), { x: 370, y, size: 11, font: fontBold, color: BRAND_NAVY });
+
+    // Remaining balance row for ACBS reports
+    if (corpusAmount !== undefined) {
+        const remainingBalance = corpusAmount - total;
+        const balColor = remainingBalance >= 0 ? rgb(0.02, 0.47, 0.34) : rgb(0.86, 0.15, 0.15);
+        y -= 18;
+        page.drawText('REMAINING BALANCE:', { x: 250, y, size: 10, font: fontBold, color: balColor });
+        page.drawText(formatCurrencyPDF(remainingBalance), { x: 370, y, size: 10, font: fontBold, color: balColor });
+    }
 
     // Signature section
     y = 130;

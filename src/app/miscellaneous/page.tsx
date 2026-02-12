@@ -21,16 +21,6 @@ interface Semester {
     created_at: string;
 }
 
-interface CorpusData {
-    amount: number;
-    bankName: string;
-    accountNumber: string;
-    lastUpdated: string;
-    totalBudgets: number;
-    unallocated: number;
-    isConfigured: boolean;
-}
-
 export default function MiscellaneousPage() {
     const { user, isLoading: authLoading } = useAuth();
     const { accountNames, updateAccountNames, refreshAccountNames } = useAccountNames();
@@ -58,19 +48,10 @@ export default function MiscellaneousPage() {
         is_active: false,
     });
 
-    // ACBS Corpus State
-    const [corpus, setCorpus] = useState<CorpusData | null>(null);
-    const [isCorpusModalOpen, setIsCorpusModalOpen] = useState(false);
-    const [isSavingCorpus, setIsSavingCorpus] = useState(false);
-    const [corpusForm, setCorpusForm] = useState({
-        amount: '',
-        bankName: '',
-        accountNumber: '',
-    });
 
-    // Redirect if not admin
+    // Redirect if not hod
     useEffect(() => {
-        if (!authLoading && user && user.role !== 'admin') {
+        if (!authLoading && user && user.role !== 'hod') {
             router.push('/');
         }
     }, [user, authLoading, router]);
@@ -91,23 +72,12 @@ export default function MiscellaneousPage() {
     };
 
     useEffect(() => {
-        if (user?.role === 'admin') {
+        if (user?.role === 'hod') {
             fetchSemesters();
-            fetchCorpus();
         }
     }, [user]);
 
-    const fetchCorpus = async () => {
-        try {
-            const response = await fetch('/api/corpus', { credentials: 'include' });
-            const result = await response.json();
-            if (result.success) {
-                setCorpus(result.data);
-            }
-        } catch (err) {
-            console.error('Failed to fetch corpus:', err);
-        }
-    };
+
 
     const resetForm = () => {
         setFormData({
@@ -175,46 +145,7 @@ export default function MiscellaneousPage() {
         }
     };
 
-    const openCorpusModal = () => {
-        setCorpusForm({
-            amount: corpus?.amount?.toString() || '',
-            bankName: corpus?.bankName || '',
-            accountNumber: corpus?.accountNumber || '',
-        });
-        setIsCorpusModalOpen(true);
-    };
 
-    const handleSaveCorpus = async () => {
-        if (!corpusForm.amount || parseFloat(corpusForm.amount) <= 0) {
-            alert('Please enter a valid corpus amount');
-            return;
-        }
-
-        setIsSavingCorpus(true);
-        try {
-            const response = await fetch('/api/corpus', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({
-                    amount: parseFloat(corpusForm.amount),
-                    bankName: corpusForm.bankName,
-                    accountNumber: corpusForm.accountNumber,
-                }),
-            });
-            const result = await response.json();
-            if (result.success) {
-                setIsCorpusModalOpen(false);
-                setCorpus(result.data);
-            } else {
-                alert(result.error || 'Failed to save corpus');
-            }
-        } catch (err) {
-            alert('Network error');
-        } finally {
-            setIsSavingCorpus(false);
-        }
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -294,10 +225,10 @@ export default function MiscellaneousPage() {
         );
     }
 
-    if (!user || user.role !== 'admin') {
+    if (!user || user.role !== 'hod') {
         return (
             <div className="flex items-center justify-center h-64">
-                <p className="text-slate-500">Access denied. Admin only.</p>
+                <p className="text-slate-500">Access denied. HOD only.</p>
             </div>
         );
     }
@@ -308,7 +239,7 @@ export default function MiscellaneousPage() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Miscellaneous Settings</h1>
-                    <p className="text-sm text-slate-500 mt-1">System configuration for administrators</p>
+                    <p className="text-sm text-slate-500 mt-1">System configuration for Head of Department</p>
                 </div>
             </div>
 
@@ -339,56 +270,8 @@ export default function MiscellaneousPage() {
                 </div>
             </div>
 
-            {/* ACBS Bank Account Section */}
-            <div className="rounded-xl border border-blue-200 bg-white shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-blue-200 flex items-center justify-between bg-blue-50">
-                    <div>
-                        <h2 className="text-lg font-semibold text-slate-900">ACBS Bank Account</h2>
-                        <p className="text-sm text-slate-500">Configure the corpus (total bank balance) for ACBS account</p>
-                    </div>
-                    <Button onClick={openCorpusModal}>
-                        {corpus?.isConfigured ? 'Edit Corpus' : 'Setup ACBS Bank Account'}
-                    </Button>
-                </div>
-                <div className="p-4">
-                    {corpus?.isConfigured ? (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="p-3 bg-blue-50 rounded-lg">
-                                    <p className="text-xs text-slate-500 mb-1">Bank Name</p>
-                                    <p className="font-medium text-slate-900">{corpus.bankName || 'Not specified'}</p>
-                                </div>
-                                <div className="p-3 bg-blue-50 rounded-lg">
-                                    <p className="text-xs text-slate-500 mb-1">Account Number</p>
-                                    <p className="font-medium text-slate-900">{corpus.accountNumber || 'Not specified'}</p>
-                                </div>
-                                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                                    <p className="text-xs text-green-600 mb-1">Total Corpus</p>
-                                    <p className="font-bold text-green-700 text-lg">{formatCurrency(corpus.amount)}</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-slate-200">
-                                <div className="p-3 bg-slate-50 rounded-lg">
-                                    <p className="text-xs text-slate-500 mb-1">Total Budgets Allocated</p>
-                                    <p className="font-semibold text-slate-700">{formatCurrency(corpus.totalBudgets)}</p>
-                                </div>
-                                <div className={`p-3 rounded-lg ${corpus.unallocated >= 0 ? 'bg-emerald-50' : 'bg-red-50'}`}>
-                                    <p className={`text-xs mb-1 ${corpus.unallocated >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>Unallocated Amount</p>
-                                    <p className={`font-semibold ${corpus.unallocated >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>{formatCurrency(corpus.unallocated)}</p>
-                                </div>
-                                <div className="p-3 bg-slate-50 rounded-lg">
-                                    <p className="text-xs text-slate-500 mb-1">Last Updated</p>
-                                    <p className="font-medium text-slate-700">{corpus.lastUpdated ? formatDate(corpus.lastUpdated, 'dd MMM yyyy, HH:mm') : 'N/A'}</p>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="text-center py-6 text-slate-500">
-                            <p>No corpus configured. Click &quot;Setup ACBS Bank Account&quot; to set the total bank balance for ACBS.</p>
-                        </div>
-                    )}
-                </div>
-            </div>
+
+
 
             {/* Semester Management Section */}
             <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -585,51 +468,7 @@ export default function MiscellaneousPage() {
                 </div>
             </Modal>
 
-            {/* ACBS Corpus Modal */}
-            <Modal
-                isOpen={isCorpusModalOpen}
-                onClose={() => setIsCorpusModalOpen(false)}
-                title="Setup ACBS Bank Account"
-                size="md"
-            >
-                <div className="space-y-4">
-                    <p className="text-sm text-slate-500">
-                        Configure the corpus (total bank balance) for the ACBS account. This amount will be used to track budget allocations.
-                    </p>
 
-                    <Input
-                        label="Bank Name"
-                        value={corpusForm.bankName}
-                        onChange={(e) => setCorpusForm({ ...corpusForm, bankName: e.target.value })}
-                        placeholder="e.g., State Bank of India"
-                    />
-
-                    <Input
-                        label="Account Number"
-                        value={corpusForm.accountNumber}
-                        onChange={(e) => setCorpusForm({ ...corpusForm, accountNumber: e.target.value })}
-                        placeholder="e.g., 12345678901234"
-                    />
-
-                    <Input
-                        label="Total Corpus Amount *"
-                        type="number"
-                        step="0.01"
-                        value={corpusForm.amount}
-                        onChange={(e) => setCorpusForm({ ...corpusForm, amount: e.target.value })}
-                        placeholder="Enter total bank balance"
-                    />
-
-                    <div className="flex justify-end gap-3 pt-4 border-t">
-                        <Button type="button" variant="ghost" onClick={() => setIsCorpusModalOpen(false)}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleSaveCorpus} isLoading={isSavingCorpus}>
-                            Save Corpus
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
         </div>
     );
 }

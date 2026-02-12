@@ -34,6 +34,7 @@ interface ReportPreviewProps {
     dateRange: string;
     isLoading?: boolean;
     onRowClick?: (item: BudgetReportItem | ExpenseReportItem) => void;
+    corpusAmount?: number;
 }
 
 export default function ReportPreview({
@@ -45,6 +46,7 @@ export default function ReportPreview({
     dateRange,
     isLoading = false,
     onRowClick,
+    corpusAmount,
 }: ReportPreviewProps) {
     if (isLoading) {
         return (
@@ -179,12 +181,22 @@ export default function ReportPreview({
 
             {/* Footer with Total */}
             {data.length > 0 && (
-                <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-between">
-                    <span className="text-sm text-slate-500">{data.length} record(s)</span>
-                    <div className="text-right">
-                        <span className="text-sm text-slate-500 mr-2">Total:</span>
-                        <span className="text-lg font-bold text-brandNavy">{formatCurrency(total)}</span>
+                <div className="bg-slate-50 px-6 py-4 border-t border-slate-200">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-500">{data.length} record(s)</span>
+                        <div className="text-right">
+                            <span className="text-sm text-slate-500 mr-2">Total:</span>
+                            <span className="text-lg font-bold text-brandNavy">{formatCurrency(total)}</span>
+                        </div>
                     </div>
+                    {corpusAmount !== undefined && (
+                        <div className="flex items-center justify-end mt-2 pt-2 border-t border-slate-200">
+                            <span className="text-sm text-slate-500 mr-2">Remaining Balance:</span>
+                            <span className={`text-lg font-bold ${(corpusAmount - total) >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                                {formatCurrency(corpusAmount - total)}
+                            </span>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

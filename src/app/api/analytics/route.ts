@@ -80,12 +80,23 @@ export async function GET(request: NextRequest) {
 
         const amount = parseFloat(corpusAmount?.value || '0');
         if (amount > 0) {
+          // Calculate total ACBS expenses for corpus display
+          const acbsExpenseTotal = await sql`
+            SELECT COALESCE(SUM(CASE WHEN status = 'approved' THEN amount ELSE 0 END), 0) as total
+            FROM expenses_new
+            WHERE department_id = ${user.department_id}
+              AND account_type = 'acbs'
+          `;
+          const acbsTotalExpenses = Number(acbsExpenseTotal[0]?.total || 0);
+
           corpusData = {
             amount,
             bankName: corpusBankName?.value || '',
             lastUpdated: corpusLastUpdated?.value || '',
             totalBudgets: totalBudget,
             unallocated: amount - totalBudget,
+            totalExpenses: acbsTotalExpenses,
+            remainingBalance: amount - acbsTotalExpenses,
           };
         }
       }

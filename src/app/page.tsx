@@ -220,15 +220,15 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="p-3 bg-white rounded-lg border border-slate-200">
-              <p className="text-xs text-slate-500 mb-1">Total Budgets</p>
+              <p className="text-xs text-slate-500 mb-1">Total Expenses</p>
               <p className="text-lg font-semibold text-slate-700">
-                {formatCurrency(summary.corpus.totalBudgets)}
+                {formatCurrency(summary.corpus.totalExpenses)}
               </p>
             </div>
-            <div className={`p-3 rounded-lg border ${summary.corpus.unallocated >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-              <p className={`text-xs mb-1 ${summary.corpus.unallocated >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>Unallocated</p>
-              <p className={`text-lg font-semibold ${summary.corpus.unallocated >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
-                {formatCurrency(summary.corpus.unallocated)}
+            <div className={`p-3 rounded-lg border ${summary.corpus.remainingBalance >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+              <p className={`text-xs mb-1 ${summary.corpus.remainingBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>Remaining Balance</p>
+              <p className={`text-lg font-semibold ${summary.corpus.remainingBalance >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                {formatCurrency(summary.corpus.remainingBalance)}
               </p>
             </div>
           </div>
