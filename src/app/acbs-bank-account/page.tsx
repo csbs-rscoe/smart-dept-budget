@@ -421,7 +421,7 @@ export default function ACBSBankAccountPage() {
                         </div>
                     ) : deposits.length === 0 ? (
                         <div className="p-8 text-center text-slate-500">
-                            No deposits found{filterType !== 'all' ? ' for the selected filter' : ''}. Click "+ Add Deposit" to add your first deposit.
+                            No deposits found{filterType !== 'all' ? ' for the selected filter' : ''}. Click &quot;+ Add Deposit&quot; to add your first deposit.
                         </div>
                     ) : (
                         <table className="w-full text-sm">
