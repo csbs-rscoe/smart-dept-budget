@@ -32,11 +32,7 @@ export default function LoginPage() {
     }
   };
 
-  const fillCredentials = (userEmail: string) => {
-    setEmail(userEmail);
-    setPassword('Admin@123'); // Default password for seeded users
-    setError('');
-  };
+
 
   return (
     <div className="min-h-screen flex">
@@ -138,35 +134,7 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            {/* Demo Credentials */}
-            <div className="mt-8 pt-6 border-t border-slate-200">
-              <p className="text-xs text-slate-500 text-center mb-3">Quick Login (click to autofill)</p>
-              <div className="space-y-2">
-                {[
-                  { email: 'hod@rscoe.edu.in', role: 'HOD', password: 'Admin@123' },
-                  { email: 'acbs@rscoe.edu.in', role: 'ACBS Staff', password: 'ACBS@123' },
-                  { email: 'innovision@rscoe.edu.in', role: 'Innovision', password: 'Innovision@123' },
-                  { email: 'staff@rscoe.edu.in', role: 'Infrastructure', password: 'Staff@123' },
-                ].map((cred) => (
-                  <button
-                    key={cred.email}
-                    type="button"
-                    onClick={() => {
-                      setEmail(cred.email);
-                      setPassword(cred.password);
-                      setError('');
-                    }}
-                    className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors text-sm"
-                  >
-                    <span className="text-slate-600">{cred.email}</span>
-                    <span className="text-xs font-medium text-brandNavy bg-brandNavy/10 px-2 py-0.5 rounded">
-                      {cred.role}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-slate-400 text-center mt-3">HOD: Admin@123 | Staff accounts: their respective passwords</p>
-            </div>
+
           </div>
 
           <p className="text-center text-xs text-slate-400 mt-6">

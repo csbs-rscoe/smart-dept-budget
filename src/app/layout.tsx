@@ -6,8 +6,8 @@ import { AccountNamesProvider } from '../context/AccountNamesContext';
 import AppShell from '../components/layout/AppShell';
 
 export const metadata = {
-  title: 'CSBS Budget',
-  description: 'Smart Department Budget Management & Expense Analytics System',
+  title: 'CSBS | Budget',
+  description: 'CSBS Department Budget Management & Expense Analytics System',
   icons: {
     icon: '/logo.jpg',
   },
