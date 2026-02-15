@@ -12,20 +12,20 @@ export async function POST(request: NextRequest) {
     const validation = validateRequest(loginSchema, body);
     if (!validation.success) {
       return NextResponse.json(
-        { success: false, error:  validation.error },
+        { success: false, error: validation.error },
         { status: 400 }
       );
     }
 
-    const { email, password } = validation.data;
+    const { email, password, rememberMe } = validation.data;
 
     // Attempt login
     const result = await loginUser(email, password);
 
-    if (!result. success) {
+    if (!result.success) {
       await createAuditLog({
         userId: null,
-        action:  'LOGIN_FAILED',
+        action: 'LOGIN_FAILED',
         entityType: 'auth',
         newValues: { email, reason: result.error },
       });
@@ -38,16 +38,21 @@ export async function POST(request: NextRequest) {
 
     // Set auth cookie
     const cookieStore = await cookies();
+    // Calculate expiration based on rememberMe
+    // Default: 6 hours (6 * 60 * 60)
+    // Remember Me: 7 days (7 * 24 * 60 * 60)
+    const maxAge = rememberMe ? 7 * 24 * 60 * 60 : 6 * 60 * 60;
+
     cookieStore.set('auth_token', result.token!, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite:  'lax',
-      maxAge: 60 * 60 * 24, // 24 hours
+      sameSite: 'lax',
+      maxAge: maxAge,
       path: '/',
     });
 
     await createAuditLog({
-      userId:  result.user! .id,
+      userId: result.user!.id,
       action: 'LOGIN_SUCCESS',
       entityType: 'auth',
       newValues: { email },
@@ -58,8 +63,8 @@ export async function POST(request: NextRequest) {
       user: result.user,
     });
   } catch (error) {
-    console. error('Login API error:', error);
-    return NextResponse. json(
+    console.error('Login API error:', error);
+    return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
     );

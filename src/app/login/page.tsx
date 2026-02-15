@@ -8,6 +8,7 @@ import Input from '../../components/ui/Input';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -19,7 +20,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const result = await login(email, password);
+      const result = await login(email, password, rememberMe);
       if (result.success) {
         router.push('/');
       } else {
@@ -122,11 +123,15 @@ export default function LoginPage() {
               />
 
               <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 text-slate-600">
-                  <input type="checkbox" className="rounded border-slate-300" />
+                <label className="flex items-center gap-2 text-slate-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="rounded border-slate-300"
+                  />
                   Remember me
                 </label>
-                <a href="#" className="text-brandNavy hover: underline">Forgot password?</a>
               </div>
 
               <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
