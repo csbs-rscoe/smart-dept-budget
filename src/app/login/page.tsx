@@ -109,7 +109,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@rscoe.edu. in"
+                placeholder="you@rscoe.edu.in"
                 required
               />
 
