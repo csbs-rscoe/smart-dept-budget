@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic';
 
 function isCloudinaryConfigured(): boolean {
   return Boolean(
-    process. env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_CLOUD_NAME &&
     process.env.CLOUDINARY_API_KEY &&
-    process.env. CLOUDINARY_API_SECRET
+    process.env.CLOUDINARY_API_SECRET
   );
 }
 
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
         const cloudinaryModule = await import('@/lib/cloudinary');
         const uploadResult = await cloudinaryModule.uploadReceipt(buffer, fileName, fileType);
 
-        if (! uploadResult.success || !uploadResult.publicId || !uploadResult.url) {
+        if (!uploadResult.success || !uploadResult.publicId || !uploadResult.url) {
           throw new Error(uploadResult.error || 'Cloudinary upload failed');
         }
 
@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
     } else {
       const base64Data = buffer.toString('base64');
       const safeName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-      publicId = 'local_' + Date. now() + '_' + safeName;
+      publicId = 'local_' + Date.now() + '_' + safeName;
       fileUrl = 'data:' + fileType + ';base64,' + base64Data;
     }
 

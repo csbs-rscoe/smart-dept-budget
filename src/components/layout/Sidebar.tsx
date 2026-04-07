@@ -41,7 +41,7 @@ const nav = [
 
 
 export default function Sidebar() {
-  const { isCollapsed, toggle } = useSidebar();
+  const { isCollapsed } = useSidebar();
   const { user, logout } = useAuth();
   const pathname = usePathname();
 
@@ -60,21 +60,6 @@ export default function Sidebar() {
           </div>
         )}
       </div>
-
-      {/* Collapse Toggle */}
-      <button
-        onClick={toggle}
-        className="absolute -right-3.5 top-16 bg-white border border-slate-200 rounded-full w-7 h-7 flex items-center justify-center shadow-md hover:bg-slate-50 hover:shadow-lg z-20 transition-all"
-      >
-        <svg
-          className={`w-4 h-4 text-slate-600 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
 
       {/* Navigation */}
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
@@ -143,7 +128,7 @@ export default function Sidebar() {
       {/* Version */}
       {!isCollapsed && (
         <div className="px-3 py-2 text-[10px] text-slate-400 border-t border-slate-200">
-          Enterprise Budget Suite v1.0
+          CSBS Budget Suite
         </div>
       )}
     </aside>

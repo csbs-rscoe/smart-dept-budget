@@ -6,6 +6,27 @@ import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import MobileSidebar from './MobileSidebar';
 import AccountTabs from './AccountTabs';
+import { useSidebar } from '../../context/SidebarContext';
+
+function CollapseToggle() {
+  const { isCollapsed, toggle } = useSidebar();
+  return (
+    <button
+      onClick={toggle}
+      className="hidden md:flex absolute left-[256px] top-[58px] bg-white border border-slate-200 rounded-full w-7 h-7 items-center justify-center shadow-md hover:bg-slate-50 hover:shadow-lg z-[9999] transition-all"
+      style={{ left: isCollapsed ? '64px' : '256px', transform: 'translateX(-50%)' }}
+    >
+      <svg
+        className={`w-4 h-4 text-slate-600 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+      </svg>
+    </button>
+  );
+}
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -41,7 +62,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
+    <div className="min-h-screen flex bg-slate-50 relative">
+      <CollapseToggle />
       <Sidebar />
       <MobileSidebar />
       <div className="flex-1 flex flex-col min-w-0">
