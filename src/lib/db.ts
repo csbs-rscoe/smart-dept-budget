@@ -1,12 +1,14 @@
 import { neon, neonConfig } from '@neondatabase/serverless';
 
-neonConfig. fetchConnectionCache = true;
+neonConfig.fetchConnectionCache = true;
 
-const databaseUrl = process. env.DATABASE_URL;
+const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
   throw new Error('DATABASE_URL environment variable is not set');
 }
+
+console.log('[DB] Connecting to:', databaseUrl.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@'));
 
 export const sql = neon(databaseUrl);
 
