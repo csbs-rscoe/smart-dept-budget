@@ -8,6 +8,7 @@ DROP TABLE IF EXISTS expense_receipts CASCADE;
 DROP TABLE IF EXISTS expenses CASCADE;
 DROP TABLE IF EXISTS expense_receipts_new CASCADE;
 DROP TABLE IF EXISTS expenses_new CASCADE;
+DROP TABLE IF EXISTS sub_budget_items CASCADE;
 DROP TABLE IF EXISTS sub_expenses CASCADE;
 DROP TABLE IF EXISTS sub_budgets CASCADE;
 DROP TABLE IF EXISTS budget_allotments CASCADE;
@@ -216,13 +217,17 @@ CREATE TABLE expenses_new (
   expense_date DATE NOT NULL,
   status VARCHAR(50) DEFAULT 'pending',
   account_type VARCHAR(20) DEFAULT 'acbs',
+  rejection_reason TEXT,
   created_by INT REFERENCES users(id),
+  approved_by INT REFERENCES users(id),
+  approved_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX idx_expenses_new_department ON expenses_new(department_id);
 CREATE INDEX idx_expenses_new_category ON expenses_new(category_id);
+CREATE INDEX idx_expenses_new_budget ON expenses_new(budget_id);
 CREATE INDEX idx_expenses_new_date ON expenses_new(expense_date);
 CREATE INDEX idx_expenses_new_status ON expenses_new(status);
 CREATE INDEX idx_expenses_new_account_type ON expenses_new(account_type);
@@ -252,6 +257,31 @@ CREATE TABLE expense_receipts (
   uploaded_by INT REFERENCES users(id),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Expense Receipts New (for expenses_new table)
+CREATE TABLE expense_receipts_new (
+  id SERIAL PRIMARY KEY,
+  expense_id INT REFERENCES expenses_new(id) ON DELETE CASCADE,
+  file_name VARCHAR(255) NOT NULL,
+  file_url TEXT NOT NULL,
+  file_type VARCHAR(100),
+  file_size INT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_expense_receipts_new_expense ON expense_receipts_new(expense_id);
+
+-- Sub-Budget Items (line items for sub-budgets)
+CREATE TABLE sub_budget_items (
+  id SERIAL PRIMARY KEY,
+  sub_budget_id INT REFERENCES sub_budgets(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  amount DECIMAL(15, 2) NOT NULL,
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_sub_budget_items_sub_budget ON sub_budget_items(sub_budget_id);
 
 -- Budget Breakdowns (installment breakdowns for budgets)
 CREATE TABLE budget_breakdowns (

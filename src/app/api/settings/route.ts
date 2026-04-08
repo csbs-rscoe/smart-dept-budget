@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// Update settings (admin only)
+// Update settings (admin or hod only)
 export async function PUT(request: NextRequest) {
     try {
         const user = await getCurrentUser();
@@ -54,8 +54,8 @@ export async function PUT(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        if (user.role !== 'admin') {
-            return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
+        if (user.role !== 'admin' && user.role !== 'hod') {
+            return NextResponse.json({ success: false, error: 'Admin or HOD access required' }, { status: 403 });
         }
 
         const body = await request.json();
@@ -86,7 +86,7 @@ export async function PUT(request: NextRequest) {
     }
 }
 
-// Bulk update multiple settings (admin only)
+// Bulk update multiple settings (admin or hod only)
 export async function POST(request: NextRequest) {
     try {
         const user = await getCurrentUser();
@@ -94,8 +94,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
         }
 
-        if (user.role !== 'admin') {
-            return NextResponse.json({ success: false, error: 'Admin access required' }, { status: 403 });
+        if (user.role !== 'admin' && user.role !== 'hod') {
+            return NextResponse.json({ success: false, error: 'Admin or HOD access required' }, { status: 403 });
         }
 
         const body = await request.json();
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
         for (const setting of settings) {
             if (setting.key && setting.value !== undefined) {
                 await sql`
-          UPDATE app_settings 
+          UPDATE app_settings
           SET value = ${setting.value}, updated_at = NOW()
           WHERE key = ${setting.key}
         `;
