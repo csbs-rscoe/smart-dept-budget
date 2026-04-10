@@ -8,7 +8,6 @@ const nav = [
   { label: 'Dashboard', href: '/' },
   { label: 'Budgets', href: '/budgets' },
   { label: 'Expenses', href: '/expenses' },
-  { label: 'Receipts', href: '/receipts' },
   { label: 'Reports', href: '/reports' },
   { label: 'ACBS Bank Account', href: '/acbs-bank-account', hodOnly: true },
   { label: 'Miscellaneous', href: '/miscellaneous', hodOnly: true },
